@@ -1,0 +1,16 @@
+# Secrets / local overrides
+.env
+.env.*
+!.env.example
+
+# PowerShell / local
+*.user
+*.suo
+*.cache
+
+# Ferramentas baixadas localmente
+tools/
+
+# OS
+Thumbs.db
+Desktop.ini

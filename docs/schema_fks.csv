@@ -1,0 +1,2 @@
+﻿"database_name","fk_name","parent_schema","parent_table","parent_column","referenced_schema","referenced_table","referenced_column","column_ordinal"
+"GA_DATALAKE","fk_dim_telefone_cd_cliente","dbo","dim_telefone","cod_cliente","dbo","dim_cliente","cod_cliente","1"
