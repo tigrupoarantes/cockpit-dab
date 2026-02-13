@@ -151,7 +151,9 @@ if ($Auth -eq 'Sql') {
 }
 
 $viewsDir = Join-Path $repoRoot 'sql/views'
-$files = Get-ChildItem -LiteralPath $viewsDir -Filter '*.sql' | Sort-Object Name
+$files = Get-ChildItem -LiteralPath $viewsDir -Filter '*.sql' |
+  Where-Object { $_.Name -notmatch '\.original\.sql$' } |
+  Sort-Object Name
 if (-not $files) { throw "Nenhum arquivo .sql encontrado em $viewsDir" }
 
 # As views do projeto são criadas no schema "dbo".

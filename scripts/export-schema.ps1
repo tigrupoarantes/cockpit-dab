@@ -38,8 +38,41 @@ function Import-DotEnvFile {
   }
 }
 
-if (-not (Get-Command Invoke-Sqlcmd -ErrorAction SilentlyContinue)) {
-  throw 'Invoke-Sqlcmd não encontrado. Instale o módulo SqlServer: Install-Module SqlServer -Scope CurrentUser'
+function Invoke-DbQuery {
+  param(
+    [Parameter(Mandatory = $true)][string]$ConnectionString,
+    [Parameter(Mandatory = $true)][string]$Sql
+  )
+
+  $conn = $null
+  try {
+    $conn = [System.Data.SqlClient.SqlConnection]::new($ConnectionString)
+    $conn.Open()
+
+    $cmd = $conn.CreateCommand()
+    $cmd.CommandTimeout = 120
+    $cmd.CommandText = $Sql
+
+    $reader = $cmd.ExecuteReader()
+    try {
+      $results = New-Object System.Collections.Generic.List[object]
+      while ($reader.Read()) {
+        $row = [ordered]@{}
+        for ($i = 0; $i -lt $reader.FieldCount; $i++) {
+          $name = $reader.GetName($i)
+          $row[$name] = if ($reader.IsDBNull($i)) { $null } else { $reader.GetValue($i) }
+        }
+        $results.Add([pscustomobject]$row)
+      }
+      return $results
+    }
+    finally {
+      $reader.Dispose()
+    }
+  }
+  finally {
+    if ($conn) { $conn.Dispose() }
+  }
 }
 
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
@@ -67,20 +100,20 @@ if ($env:MSSQL_TRUST_SERVER_CERTIFICATE) {
   $trust = @('1','true','yes','y','sim') -contains $env:MSSQL_TRUST_SERVER_CERTIFICATE.ToLowerInvariant()
 }
 
-$invokeParams = @{ ServerInstance = $ServerInstance; Database = $Database; ErrorAction = 'Stop' }
-if ($trust) { $invokeParams.TrustServerCertificate = $true }
+$serverForConn = $ServerInstance
+$trustText = if ($trust) { 'True' } else { 'False' }
+$connectionString = $null
 
 if ($Auth -eq 'Sql') {
   if (-not $Username) { throw 'Para Auth=Sql, defina MSSQL_USERNAME ou passe -Username.' }
-
-  $securePassword = $null
-  if ($env:MSSQL_PASSWORD) {
-    $securePassword = ConvertTo-SecureString $env:MSSQL_PASSWORD -AsPlainText -Force
-  } else {
-    $securePassword = Read-Host 'Senha do SQL (não será exibida)' -AsSecureString
+  if (-not $env:MSSQL_PASSWORD) {
+    $pw = Read-Host 'Senha do SQL (não será exibida)' -AsSecureString
+    $env:MSSQL_PASSWORD = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($pw))
   }
-
-  $invokeParams.Credential = [PSCredential]::new($Username, $securePassword)
+  $connectionString = "Server=$serverForConn;Database=$Database;User ID=$Username;Password=$($env:MSSQL_PASSWORD);Encrypt=True;TrustServerCertificate=$trustText;"
+}
+else {
+  $connectionString = "Server=$serverForConn;Database=$Database;Integrated Security=True;Encrypt=True;TrustServerCertificate=$trustText;"
 }
 
 $columnsSqlPath = Join-Path $repoRoot 'sql/meta/columns.sql'
@@ -94,11 +127,11 @@ $columnsOut = Join-Path $docsDir 'schema_columns.csv'
 $fksOut = Join-Path $docsDir 'schema_fks.csv'
 
 Write-Output "Exportando colunas de $Database..."
-$columns = Invoke-Sqlcmd @invokeParams -Query $columnsQuery
+$columns = Invoke-DbQuery -ConnectionString $connectionString -Sql $columnsQuery
 $columns | Export-Csv -LiteralPath $columnsOut -NoTypeInformation -Encoding UTF8
 Write-Output "OK: $columnsOut"
 
 Write-Output "Exportando FKs de $Database..."
-$fks = Invoke-Sqlcmd @invokeParams -Query $fksQuery
+$fks = Invoke-DbQuery -ConnectionString $connectionString -Sql $fksQuery
 $fks | Export-Csv -LiteralPath $fksOut -NoTypeInformation -Encoding UTF8
 Write-Output "OK: $fksOut"

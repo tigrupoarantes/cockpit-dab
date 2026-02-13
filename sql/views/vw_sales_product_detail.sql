@@ -34,7 +34,7 @@ SELECT DISTINCT
 
   produto.cod_produto                                            AS id_sku,
   produto.ean                                                    AS ean,
-  venda.unid_venda                                               AS unid_venda,
+  venda.unid_pedido                                              AS unid_venda,
   produto.descricao                                              AS descricao_produto,
   produto.categoria                                              AS categoria_produto,
   produto.familia                                                AS familia_produto,
@@ -43,7 +43,7 @@ SELECT DISTINCT
 
   venda.qtde_venda                                               AS qt_vendida,
   produto_custo.custo_unitario                                   AS vl_custo_unitario,
-  venda.vl_unit_venda                                            AS vl_unit_venda,
+  venda.preco_unit                                               AS vl_unit_venda,
   venda.vl_unit_tabela                                           AS vl_unit_tabela,
 
   vendedor.nome_vendedor                                         AS vendedor,
@@ -52,22 +52,24 @@ SELECT DISTINCT
   venda.tipo_ped                                                 AS tipo_pedido,
   venda.situacao                                                 AS situacao,
   venda.numero_nf                                                AS numero_nf
-FROM dbo.fact_venda venda
+FROM dbo.fact_venda_produto venda
 INNER JOIN dbo.dim_tempo tempo
-  ON tempo.sk_tempo = venda.cod_tempo
+  ON tempo.sk_tempo = venda.sk_tempo
 INNER JOIN dbo.dim_cliente cliente
-  ON cliente.sk_cliente = venda.cod_cliente
+  ON cliente.sk_cliente = venda.sk_cliente
 LEFT JOIN dbo.dim_telefone telefone
-  ON telefone.cod_cliente = cliente.cod_cliente
+  ON telefone.sk_cliente = cliente.sk_cliente
  AND telefone.tipo_tel = 'COMERCIAL'
 INNER JOIN dbo.dim_produto produto
-  ON produto.sk_prod = venda.cod_produto
+  ON produto.sk_prod = venda.sk_produto
 INNER JOIN dbo.dim_prod_unid produto_unid
-  ON produto_unid.sk_produto = venda.cod_produto
+  ON produto_unid.sk_produto = venda.sk_produto
 INNER JOIN dbo.dim_fornecedor fornecedor
   ON fornecedor.sk_fornecedor = produto_unid.sk_fornecedor
 INNER JOIN dbo.fact_produto_custo produto_custo
-  ON produto_custo.sk_prod = venda.cod_produto
+  ON produto_custo.sk_prod = venda.sk_produto
  AND produto_custo.sk_fornecedor = fornecedor.sk_fornecedor
- AND produto_custo.sk_tipo_custo = 1; -- Medio Ponderado
+ AND produto_custo.sk_tipo_custo = 1 -- Medio Ponderado
+LEFT JOIN dbo.dim_vendedor vendedor
+  ON vendedor.sk_vend = venda.sk_vendedor;
 GO

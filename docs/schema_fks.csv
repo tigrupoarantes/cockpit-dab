@@ -1,2 +1,6 @@
 ﻿"database_name","fk_name","parent_schema","parent_table","parent_column","referenced_schema","referenced_table","referenced_column","column_ordinal"
-"GA_DATALAKE","fk_dim_telefone_cd_cliente","dbo","dim_telefone","cod_cliente","dbo","dim_cliente","cod_cliente","1"
+"GA_DATALAKE","fk_prod_unid_fornecedor","dbo","dim_prod_unid","sk_fornecedor","dbo","dim_fornecedor","sk_fornecedor","1"
+"GA_DATALAKE","fk_prod_unid_produto","dbo","dim_prod_unid","sk_produto","dbo","dim_produto","sk_prod","1"
+"GA_DATALAKE","fk_dim_telefone_cd_cliente","dbo","dim_telefone","sk_cliente","dbo","dim_cliente","sk_cliente","1"
+"GA_DATALAKE","fk_produto_custo_fornecedor","dbo","fact_produto_custo","sk_fornecedor","dbo","dim_fornecedor","sk_fornecedor","1"
+"GA_DATALAKE","fk_produto_custo_prod","dbo","fact_produto_custo","sk_prod","dbo","dim_produto","sk_prod","1"
