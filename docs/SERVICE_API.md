@@ -13,6 +13,22 @@ Este documento descreve como consumir a API de leitura do Datalake (SQL Server) 
   - Interno (DAB): `/api/*`
   - Público (IIS): `/v1/*` (alias para `/api/*`)
 
+## 1.1) Formato de resposta (DAB REST)
+
+Os endpoints REST do DAB retornam, em geral, um payload no formato:
+
+```json
+{
+  "value": [
+    { "...": "..." }
+  ],
+  "nextLink": "/api/<entidade>?$after=<token>&$first=<n>"
+}
+```
+
+- `value`: lista de linhas retornadas pela view.
+- `nextLink`: aparece quando há mais páginas (ver paginação).
+
 ## 2) URL base
 
 ### Produção
@@ -51,19 +67,49 @@ A lista abaixo reflete as entidades configuradas no DAB (ver [dab/dab-config.jso
 ### Healthcheck
 - `GET /health`
 
+Retorno esperado (exemplo):
+
+```json
+{
+  "value": [
+    {
+      "id": 1,
+      "is_ok": true,
+      "server_name": "...",
+      "database_name": "...",
+      "login_name": "...",
+      "dt_utc": "2026-02-13T12:34:56.789Z"
+    }
+  ]
+}
+```
+
 ### Vendas
 - `GET /sales_daily`
 - `GET /sales_by_sku`
 - `GET /venda_prod`
 
+Status atual:
+- `venda_prod`: retorna dados (view `dbo.vw_venda_prod` → wrapper da canônica `dbo.vw_sales_product_detail`).
+- `sales_daily` e `sales_by_sku`: **stub** (compila, mas retorna 0 linhas até mapeamento final do schema).
+
 ### Cobertura
 - `GET /coverage_city`
+
+Status atual:
+- `coverage_city`: **stub** (0 linhas).
 
 ### Estoque
 - `GET /stock_position`
 
+Status atual:
+- `stock_position`: **stub** (0 linhas).
+
 ### Produtos
 - `GET /produtos`
+
+Status atual:
+- `produtos`: **stub** (0 linhas).
 
 Exemplo (produção):
 - `https://api.grupoarantes.emp.br/v1/health`
@@ -137,6 +183,39 @@ Padrão de request:
 - Método: `GET`
 - Headers: `X-API-Key` + `Accept: application/json`
 - Timeout: 15s (ajustável)
+
+## 9.1) Integração com Cockpit GA (Supabase)
+
+Pelo desenho do Cockpit, as chamadas para a API DAB devem ser **server-to-server** via **Edge Functions**.
+
+### Mapeamento para `api_connections`
+
+O Cockpit possui a tabela `api_connections` com configuração flexível de auth. Para a API atual (IIS exigindo `X-API-Key`), use:
+
+- `api_base_url`: `https://api.grupoarantes.emp.br/v1`
+- `auth_type`: `api_key`
+- `api_key`: `<SUA_CHAVE>`
+- `auth_header`: `X-API-Key`
+- `extra_headers` (opcional):
+  - `{ "Accept": "application/json" }`
+
+### Observação importante sobre Bearer
+
+O contrato do Cockpit menciona `Authorization: Bearer <token>`. **Hoje, o gateway no IIS está validando `X-API-Key`**.
+
+Se vocês quiserem padronizar em Bearer no app, existem duas opções:
+- Ajustar o app para enviar `X-API-Key` (sem mudar o servidor).
+- Ou alterar a regra do IIS para validar `Authorization` (aí atualizamos esta doc e a configuração recomendada).
+
+## 9.2) Endpoint “/companies”
+
+O documento do Cockpit menciona `GET /companies` como obrigatório.
+
+**Estado atual do serviço DAB**: ainda **não existe** `GET /companies` no `dab-config.json`.
+
+Próximas opções (escolher uma):
+- (A) Cockpit usa a tabela `companies` do Supabase como fonte de cadastro e não depende da API DAB para isso.
+- (B) Implementar `vw_companies` + entidade DAB `companies` (precisamos alinhar quais campos devem existir no datalake: `businessType`, `segmentMode`, indústrias/BUs/lojas etc.).
 
 ## 10) Troubleshooting rápido
 
