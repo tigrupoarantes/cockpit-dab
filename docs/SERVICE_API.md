@@ -34,6 +34,8 @@ Os endpoints REST do DAB retornam, em geral, um payload no formato:
 ### Produção
 - Base URL: `https://api.grupoarantes.emp.br/v1`
 
+Nota (Cockpit GA): algumas telas de configuração/teste **anexam automaticamente** caminhos como `/health`, e em alguns casos também um prefixo (ex.: `/v1`). Se o “Testar Conexão” estiver retornando **404**, valide no DevTools/Network qual URL exata ele chamou e ajuste o `api_base_url` para evitar duplicação (ex.: `/v1/v1/health` ou `/v1/api/health`).
+
 ### Desenvolvimento local
 - Base URL: `http://localhost:5000/api`
 
@@ -237,6 +239,50 @@ Se o CNPJ for obrigatório para identificação, precisamos que o datalake dispo
 - **401 Unauthorized**: header `X-API-Key` ausente ou inválido.
 - **404**: caminho errado (em produção use `/v1/...`, em local use `/api/...`).
 - **502/503**: IIS/proxy não conseguiu falar com o DAB (backend parado/porta errada).
+
+Checklist rápido para erro **404** no Cockpit:
+- Abra DevTools → Network e copie a URL chamada ao clicar em “Testar Conexão”.
+- Se aparecer `/v1/v1/...`, remova o sufixo `/v1` do `api_base_url`.
+- Se aparecer `/v1/api/...`, use `api_base_url=https://api.grupoarantes.emp.br` (sem `/v1`).
+
+## 10.1) Compatibilidade de rotas (IIS)
+
+Se o Cockpit (ou alguma Edge Function) estiver chamando caminhos diferentes do padrão (`/v1/<entidade>`), você pode tornar o IIS mais permissivo adicionando aliases.
+
+Casos comuns que geram **404**:
+- Chamando apenas a base `.../v1` (sem `/health`)
+- Chamando `.../health` (root)
+- Chamando `.../api/health` (path interno do DAB)
+
+Exemplo de regras adicionais (URL Rewrite) para aceitar esses formatos e encaminhar para o DAB:
+
+```xml
+<!-- Redireciona /v1 (sem rota) para /v1/health -->
+<rule name="v1-root-to-health" stopProcessing="true">
+  <match url="^v1/?$" />
+  <action type="Redirect" url="/v1/health" redirectType="Temporary" />
+</rule>
+
+<!-- Aceita /health direto -->
+<rule name="health-root-alias" stopProcessing="true">
+  <match url="^health$" />
+  <action type="Rewrite" url="http://localhost:5000/api/health" appendQueryString="true" />
+</rule>
+
+<!-- Aceita /companies direto -->
+<rule name="companies-root-alias" stopProcessing="true">
+  <match url="^companies$" />
+  <action type="Rewrite" url="http://localhost:5000/api/companies" appendQueryString="true" />
+</rule>
+
+<!-- Aceita /api/* público (pass-through) -->
+<rule name="api-pass-through" stopProcessing="true">
+  <match url="^api/(.*)$" />
+  <action type="Rewrite" url="http://localhost:5000/api/{R:1}" appendQueryString="true" />
+</rule>
+```
+
+Observação: mantenha a validação do `X-API-Key` aplicada também a essas rotas (mesma regra/condição de segurança que vocês já usam no IIS).
 
 ## 11) Referências do repo
 
