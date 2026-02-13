@@ -249,10 +249,7 @@
         "object": "dbo.vw_venda_prod",
         "type": "view",
         "key-fields": [
-          "ANO_VENDA",
-          "MES_VENDA",
-          "DATA_VENDA",
-          "SKU_PRODUTO"
+          "ID_VENDA"
         ]
       },
       "graphql": {

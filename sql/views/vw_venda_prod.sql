@@ -7,6 +7,7 @@ AS
   Definicao original exportada: vw_venda_prod.original.sql
 */
 SELECT
+  v.id_venda                  AS ID_VENDA,
   v.tenant_id                 AS COD_EMPRESA,
   v.ano_venda                 AS ANO_VENDA,
   v.mes_venda                 AS MES_VENDA,
@@ -26,6 +27,7 @@ SELECT
   v.segmento_cliente          AS SEGMENTO_CLIENTE,
   v.latitude_cliente          AS LATITUDE,
   v.longitude_cliente         AS LOGINTUDE,
+  v.longitude_cliente         AS LONGITUDE,
 
   v.id_sku                    AS SKU_PRODUTO,
   v.ean                       AS EAN_PRODUTO,

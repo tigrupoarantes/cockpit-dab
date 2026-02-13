@@ -12,6 +12,7 @@ AS
   - Colunas foram normalizadas para nomes previsiveis e faceis de filtrar via parametros (DAB).
 */
 SELECT DISTINCT
+  venda.sk_venda                                                  AS id_venda,
   venda.cod_empresa                                              AS tenant_id,
   tempo.ano                                                      AS ano_venda,
   tempo.mes                                                      AS mes_venda,
