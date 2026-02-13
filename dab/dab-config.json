@@ -8,6 +8,11 @@
     }
   },
   "runtime": {
+    "pagination": {
+      "default-page-size": 100,
+      "max-page-size": 100000,
+      "next-link-relative": true
+    },
     "rest": {
       "enabled": true,
       "path": "/api",
@@ -194,6 +199,38 @@
         "type": {
           "singular": "produtos",
           "plural": "produtos"
+        }
+      },
+      "rest": {
+        "enabled": true
+      },
+      "permissions": [
+        {
+          "role": "anonymous",
+          "actions": [
+            {
+              "action": "read"
+            }
+          ]
+        }
+      ]
+    },
+    "venda_prod": {
+      "source": {
+        "object": "dbo.vw_venda_prod",
+        "type": "view",
+        "key-fields": [
+          "ANO_VENDA",
+          "MES_VENDA",
+          "DATA_VENDA",
+          "SKU_PRODUTO"
+        ]
+      },
+      "graphql": {
+        "enabled": true,
+        "type": {
+          "singular": "venda_prod",
+          "plural": "venda_prods"
         }
       },
       "rest": {

@@ -28,6 +28,11 @@ function Import-DotEnvFile {
     }
 
     if ($name) {
+      $existing = $null
+      try { $existing = (Get-Item -Path ("Env:$name") -ErrorAction SilentlyContinue).Value } catch { }
+      if ([string]::IsNullOrEmpty($value) -and -not [string]::IsNullOrEmpty($existing)) {
+        continue
+      }
       Set-Item -Path ("Env:$name") -Value $value
     }
   }

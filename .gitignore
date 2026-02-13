@@ -11,6 +11,9 @@
 # Ferramentas baixadas localmente
 tools/
 
+# Logs locais (debug)
+logs/
+
 # OS
 Thumbs.db
 Desktop.ini

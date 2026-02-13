@@ -1,8 +1,15 @@
 param(
-  [string]$BaseUrl = 'http://localhost:5000'
+  [string]$BaseUrl = 'http://localhost:5000',
+  [string]$DataVenda
 )
 
 $ErrorActionPreference = 'Stop'
+
+if (-not $DataVenda) {
+  $DataVenda = (Get-Date).AddDays(-1).ToString('yyyy-MM-dd')
+}
+
+$vendaProdUrl = ($BaseUrl + "/api/venda_prod?`$first=10")
 
 $endpoints = @(
   "$BaseUrl/api/health",
@@ -10,7 +17,8 @@ $endpoints = @(
   "$BaseUrl/api/sales_daily",
   "$BaseUrl/api/sales_by_sku",
   "$BaseUrl/api/coverage_city",
-  "$BaseUrl/api/stock_position"
+  "$BaseUrl/api/stock_position",
+  $vendaProdUrl
 )
 
 foreach ($url in $endpoints) {

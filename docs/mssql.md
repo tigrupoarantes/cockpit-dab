@@ -6,7 +6,7 @@ Este repo não deve armazenar credenciais em texto.
 1. Copie `.env.example` para `.env.local`
 2. Preencha:
    - `MSSQL_SERVER=SEU_SERVIDOR\\SUA_INSTANCIA`
-   - `MSSQL_DATABASE=SEU_BANCO` (opcional)
+   - `MSSQL_DATABASE=SEU_BANCO` (necessario para iniciar a API com `scripts/run-local.ps1`)
    - `MSSQL_AUTH=Windows`
 3. Conecte:
    - `powershell -NoProfile -File scripts/connect-mssql.ps1`
@@ -15,7 +15,7 @@ Este repo não deve armazenar credenciais em texto.
 1. Copie `.env.example` para `.env.local`
 2. Preencha:
    - `MSSQL_SERVER=...`
-   - `MSSQL_DATABASE=...` (opcional)
+   - `MSSQL_DATABASE=...` (necessario para iniciar a API com `scripts/run-local.ps1`)
    - `MSSQL_AUTH=Sql`
    - `MSSQL_USERNAME=...`
    - **não** commite `MSSQL_PASSWORD` (use prompt de senha do script)

@@ -2,7 +2,8 @@ param(
   [string]$ServerInstance,
   [string]$Database,
   [ValidateSet('Windows','Sql')][string]$Auth,
-  [string]$Username
+  [string]$Username,
+  [string[]]$ExcludeViewFiles
 )
 
 $ErrorActionPreference = 'Stop'
@@ -29,13 +30,72 @@ function Import-DotEnvFile {
     }
 
     if ($name) {
+      $existing = $null
+      try { $existing = (Get-Item -Path ("Env:$name") -ErrorAction SilentlyContinue).Value } catch { }
+      if ([string]::IsNullOrEmpty($value) -and -not [string]::IsNullOrEmpty($existing)) {
+        continue
+      }
       Set-Item -Path ("Env:$name") -Value $value
     }
   }
 }
 
-if (-not (Get-Command Invoke-Sqlcmd -ErrorAction SilentlyContinue)) {
-  throw 'Invoke-Sqlcmd não encontrado. Instale o módulo SqlServer: Install-Module SqlServer -Scope CurrentUser'
+function Invoke-DbNonQuery {
+  param(
+    [Parameter(Mandatory = $true)][string]$ConnectionString,
+    [Parameter(Mandatory = $true)][string]$Sql
+  )
+
+  $conn = $null
+  try {
+    $conn = [System.Data.SqlClient.SqlConnection]::new($ConnectionString)
+    $conn.Open()
+
+    # SqlCommand não entende "GO". Split em batches por linha "GO".
+    $batches = @()
+    $current = New-Object System.Text.StringBuilder
+    foreach ($line in ($Sql -split "`r?`n")) {
+      if ($line.Trim().ToUpperInvariant() -eq 'GO') {
+        $text = $current.ToString().Trim()
+        if ($text) { $batches += $text }
+        $null = $current.Clear()
+        continue
+      }
+      $null = $current.AppendLine($line)
+    }
+
+    $tail = $current.ToString().Trim()
+    if ($tail) { $batches += $tail }
+
+    foreach ($batch in $batches) {
+      $cmd = $conn.CreateCommand()
+      $cmd.CommandTimeout = 120
+      $cmd.CommandText = $batch
+      $null = $cmd.ExecuteNonQuery()
+    }
+  }
+  finally {
+    if ($conn) { $conn.Dispose() }
+  }
+}
+
+function Invoke-DbScalar {
+  param(
+    [Parameter(Mandatory = $true)][string]$ConnectionString,
+    [Parameter(Mandatory = $true)][string]$Sql
+  )
+
+  $conn = $null
+  try {
+    $conn = [System.Data.SqlClient.SqlConnection]::new($ConnectionString)
+    $conn.Open()
+    $cmd = $conn.CreateCommand()
+    $cmd.CommandTimeout = 60
+    $cmd.CommandText = $Sql
+    return $cmd.ExecuteScalar()
+  } finally {
+    if ($conn) { $conn.Dispose() }
+  }
 }
 
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
@@ -76,21 +136,47 @@ if ($Auth -eq 'Sql') {
   $invokeParams.Credential = [PSCredential]::new($Username, $securePassword)
 }
 
+$serverForConn = $ServerInstance
+$trustText = if ($trust) { 'True' } else { 'False' }
+$connectionString = $null
+if ($Auth -eq 'Sql') {
+  if (-not $Username) { throw 'Para Auth=Sql, defina MSSQL_USERNAME ou passe -Username.' }
+  if (-not $env:MSSQL_PASSWORD) {
+    $pw = Read-Host 'Senha do SQL (não será exibida)' -AsSecureString
+    $env:MSSQL_PASSWORD = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($pw))
+  }
+  $connectionString = "Server=$serverForConn;Database=$Database;User ID=$Username;Password=$($env:MSSQL_PASSWORD);Encrypt=True;TrustServerCertificate=$trustText;"
+} else {
+  $connectionString = "Server=$serverForConn;Database=$Database;Integrated Security=True;Encrypt=True;TrustServerCertificate=$trustText;"
+}
+
 $viewsDir = Join-Path $repoRoot 'sql/views'
 $files = Get-ChildItem -LiteralPath $viewsDir -Filter '*.sql' | Sort-Object Name
 if (-not $files) { throw "Nenhum arquivo .sql encontrado em $viewsDir" }
 
 # As views do projeto são criadas no schema "dbo".
-$schemaCheck = Invoke-Sqlcmd @invokeParams -Query "SELECT IIF(EXISTS(SELECT 1 FROM sys.schemas WHERE name='dbo'),1,0) AS has_dbo_schema, HAS_PERMS_BY_NAME('dbo','SCHEMA','ALTER') AS can_alter_dbo_schema;"
+$schemaCheckSql = "SELECT IIF(EXISTS(SELECT 1 FROM sys.schemas WHERE name='dbo'),1,0) AS has_dbo_schema, HAS_PERMS_BY_NAME('dbo','SCHEMA','ALTER') AS can_alter_dbo_schema;"
+$schemaHasDbo = [int](Invoke-DbScalar -ConnectionString $connectionString -Sql "SELECT IIF(EXISTS(SELECT 1 FROM sys.schemas WHERE name='dbo'),1,0);")
+$schemaCanAlter = [int](Invoke-DbScalar -ConnectionString $connectionString -Sql "SELECT HAS_PERMS_BY_NAME('dbo','SCHEMA','ALTER');")
+
+$schemaCheck = [PSCustomObject]@{ has_dbo_schema = $schemaHasDbo; can_alter_dbo_schema = $schemaCanAlter }
 if ($schemaCheck.has_dbo_schema -ne 1 -or $schemaCheck.can_alter_dbo_schema -ne 1) {
   throw ("Você não tem permissão para criar/alterar views no schema 'dbo'.\n" +
          "Peça ao DBA: GRANT ALTER ON SCHEMA::dbo TO [datalake_consulta];")
 }
 
+if ($ExcludeViewFiles) {
+  $excludeSet = @{}
+  foreach ($x in $ExcludeViewFiles) {
+    if ($x) { $excludeSet[[string]$x.ToLowerInvariant()] = $true }
+  }
+  $files = $files | Where-Object { -not $excludeSet.ContainsKey($_.Name.ToLowerInvariant()) }
+}
+
 foreach ($f in $files) {
   Write-Output "Aplicando view: $($f.Name)"
   $sql = Get-Content -LiteralPath $f.FullName -Raw
-  Invoke-Sqlcmd @invokeParams -Query $sql | Out-Null
+  Invoke-DbNonQuery -ConnectionString $connectionString -Sql $sql
 }
 
 Write-Output 'OK: views aplicadas.'
