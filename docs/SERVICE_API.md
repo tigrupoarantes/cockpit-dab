@@ -108,6 +108,19 @@ Status atual:
 ### Produtos
 - `GET /produtos`
 
+### Empresas
+- `GET /companies`
+
+Retorna a lista de empresas detectadas no datalake.
+
+Campos (MVP):
+- `code`: código da empresa (ex.: `"2"`)
+- `name`: nome da empresa
+- `cnpj`: **atualmente `null`** (não foi encontrado CNPJ de empresa no schema atual)
+
+Exemplo (produção):
+- `https://api.grupoarantes.emp.br/v1/companies`
+
 Status atual:
 - `produtos`: **stub** (0 linhas).
 
@@ -211,11 +224,13 @@ Se vocês quiserem padronizar em Bearer no app, existem duas opções:
 
 O documento do Cockpit menciona `GET /companies` como obrigatório.
 
-**Estado atual do serviço DAB**: ainda **não existe** `GET /companies` no `dab-config.json`.
+**Estado atual do serviço DAB**: `GET /companies` foi implementado com base na view `dbo.vw_companies`.
 
-Próximas opções (escolher uma):
-- (A) Cockpit usa a tabela `companies` do Supabase como fonte de cadastro e não depende da API DAB para isso.
-- (B) Implementar `vw_companies` + entidade DAB `companies` (precisamos alinhar quais campos devem existir no datalake: `businessType`, `segmentMode`, indústrias/BUs/lojas etc.).
+Limitações atuais:
+- O schema atual do datalake expõe `cod_empresa` + `nome_empresa` de forma consistente.
+- Não foi identificado um campo de **CNPJ da empresa** no banco atual (apenas CPF/CNPJ de cliente/fornecedor). Por isso `cnpj` vem como `null`.
+
+Se o CNPJ for obrigatório para identificação, precisamos que o datalake disponibilize uma tabela/dimensão de empresa (ex.: `dim_empresa`) com `cod_empresa` → `cnpj`.
 
 ## 10) Troubleshooting rápido
 

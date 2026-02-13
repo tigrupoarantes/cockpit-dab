@@ -13,6 +13,7 @@ $vendaProdUrl = ($BaseUrl + "/api/venda_prod?`$first=10")
 
 $endpoints = @(
   "$BaseUrl/api/health",
+  "$BaseUrl/api/companies",
   "$BaseUrl/api/produtos",
   "$BaseUrl/api/sales_daily",
   "$BaseUrl/api/sales_by_sku",

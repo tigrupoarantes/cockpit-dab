@@ -35,6 +35,35 @@
     }
   },
   "entities": {
+    "companies": {
+      "source": {
+        "object": "dbo.vw_companies",
+        "type": "view",
+        "key-fields": [
+          "code"
+        ]
+      },
+      "graphql": {
+        "enabled": true,
+        "type": {
+          "singular": "company",
+          "plural": "companies"
+        }
+      },
+      "rest": {
+        "enabled": true
+      },
+      "permissions": [
+        {
+          "role": "anonymous",
+          "actions": [
+            {
+              "action": "read"
+            }
+          ]
+        }
+      ]
+    },
     "health": {
       "source": {
         "object": "dbo.vw_health",
