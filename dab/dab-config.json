@@ -1,277 +1,311 @@
-{
-  "$schema": "https://github.com/Azure/data-api-builder/releases/download/v1.6.87/dab.draft.schema.json",
-  "data-source": {
-    "database-type": "mssql",
-    "connection-string": "@env('DAB_CONNECTION_STRING')",
-    "options": {
-      "set-session-context": false
-    }
-  },
-  "runtime": {
-    "pagination": {
-      "default-page-size": 100,
-      "max-page-size": 100000,
-      "next-link-relative": true
-    },
-    "rest": {
-      "enabled": true,
-      "path": "/api",
-      "request-body-strict": true
-    },
-    "graphql": {
-      "enabled": false,
-      "path": "/graphql",
-      "allow-introspection": true
-    },
-    "host": {
-      "cors": {
-        "origins": [],
-        "allow-credentials": false
-      },
-      "authentication": {
-        "provider": "StaticWebApps"
-      },
-      "mode": "production"
-    }
-  },
-  "entities": {
-    "companies": {
-      "source": {
-        "object": "dbo.vw_companies",
-        "type": "view",
-        "key-fields": [
-          "code"
-        ]
-      },
-      "graphql": {
-        "enabled": true,
-        "type": {
-          "singular": "company",
-          "plural": "companies"
-        }
-      },
-      "rest": {
-        "enabled": true
-      },
-      "permissions": [
-        {
-          "role": "anonymous",
-          "actions": [
-            {
-              "action": "read"
-            }
-          ]
-        }
-      ]
-    },
-    "health": {
-      "source": {
-        "object": "dbo.vw_health",
-        "type": "view",
-        "key-fields": [
-          "id"
-        ]
-      },
-      "graphql": {
-        "enabled": true,
-        "type": {
-          "singular": "health",
-          "plural": "healths"
-        }
-      },
-      "rest": {
-        "enabled": true
-      },
-      "permissions": [
-        {
-          "role": "anonymous",
-          "actions": [
-            {
-              "action": "read"
-            }
-          ]
-        }
-      ]
-    },
-    "sales_daily": {
-      "source": {
-        "object": "dbo.vw_sales_daily",
-        "type": "view",
-        "key-fields": [
-          "tenant_id",
-          "dt_ref"
-        ]
-      },
-      "graphql": {
-        "enabled": true,
-        "type": {
-          "singular": "sales_daily",
-          "plural": "sales_dailies"
-        }
-      },
-      "rest": {
-        "enabled": true
-      },
-      "permissions": [
-        {
-          "role": "anonymous",
-          "actions": [
-            {
-              "action": "read"
-            }
-          ]
-        }
-      ]
-    },
-    "sales_by_sku": {
-      "source": {
-        "object": "dbo.vw_sales_by_sku",
-        "type": "view",
-        "key-fields": [
-          "tenant_id",
-          "dt_ref",
-          "id_sku"
-        ]
-      },
-      "graphql": {
-        "enabled": true,
-        "type": {
-          "singular": "sales_by_sku",
-          "plural": "sales_by_skus"
-        }
-      },
-      "rest": {
-        "enabled": true
-      },
-      "permissions": [
-        {
-          "role": "anonymous",
-          "actions": [
-            {
-              "action": "read"
-            }
-          ]
-        }
-      ]
-    },
-    "coverage_city": {
-      "source": {
-        "object": "dbo.vw_coverage_city",
-        "type": "view",
-        "key-fields": [
-          "tenant_id",
-          "dt_ref",
-          "ds_cidade"
-        ]
-      },
-      "graphql": {
-        "enabled": true,
-        "type": {
-          "singular": "coverage_city",
-          "plural": "coverage_cities"
-        }
-      },
-      "rest": {
-        "enabled": true
-      },
-      "permissions": [
-        {
-          "role": "anonymous",
-          "actions": [
-            {
-              "action": "read"
-            }
-          ]
-        }
-      ]
-    },
-    "stock_position": {
-      "source": {
-        "object": "dbo.vw_stock_position",
-        "type": "view",
-        "key-fields": [
-          "tenant_id",
-          "id_sku"
-        ]
-      },
-      "graphql": {
-        "enabled": true,
-        "type": {
-          "singular": "stock_position",
-          "plural": "stock_positions"
-        }
-      },
-      "rest": {
-        "enabled": true
-      },
-      "permissions": [
-        {
-          "role": "anonymous",
-          "actions": [
-            {
-              "action": "read"
-            }
-          ]
-        }
-      ]
-    },
-    "produtos": {
-      "source": {
-        "object": "dbo.vw_produtos",
-        "type": "view",
-        "key-fields": [
-          "id_dim_prod"
-        ]
-      },
-      "graphql": {
-        "enabled": true,
-        "type": {
-          "singular": "produtos",
-          "plural": "produtos"
-        }
-      },
-      "rest": {
-        "enabled": true
-      },
-      "permissions": [
-        {
-          "role": "anonymous",
-          "actions": [
-            {
-              "action": "read"
-            }
-          ]
-        }
-      ]
-    },
-    "venda_prod": {
-      "source": {
-        "object": "dbo.vw_venda_prod",
-        "type": "view",
-        "key-fields": [
-          "ID_VENDA"
-        ]
-      },
-      "graphql": {
-        "enabled": true,
-        "type": {
-          "singular": "venda_prod",
-          "plural": "venda_prods"
-        }
-      },
-      "rest": {
-        "enabled": true
-      },
-      "permissions": [
-        {
-          "role": "anonymous",
-          "actions": [
-            {
-              "action": "read"
-            }
-          ]
-        }
-      ]
-    }
-  }
+﻿{
+    "$schema":  "https://github.com/Azure/data-api-builder/releases/download/v1.6.87/dab.draft.schema.json",
+    "data-source":  {
+                        "database-type":  "mssql",
+                        "connection-string":  "@env(\u0027DAB_CONNECTION_STRING\u0027)",
+                        "options":  {
+                                        "set-session-context":  false
+                                    }
+                    },
+    "runtime":  {
+                    "pagination":  {
+                                       "default-page-size":  100,
+                                       "max-page-size":  100000,
+                                       "next-link-relative":  true
+                                   },
+                    "rest":  {
+                                 "enabled":  true,
+                                 "path":  "/api",
+                                 "request-body-strict":  true
+                             },
+                    "graphql":  {
+                                    "enabled":  false,
+                                    "path":  "/graphql",
+                                    "allow-introspection":  true
+                                },
+                    "host":  {
+                                 "cors":  {
+                                              "origins":  [
+
+                                                          ],
+                                              "allow-credentials":  false
+                                          },
+                                 "authentication":  {
+                                                        "provider":  "StaticWebApps"
+                                                    },
+                                 "mode":  "production"
+                             }
+                },
+    "entities":  {
+                     "companies":  {
+                                       "source":  {
+                                                      "object":  "dbo.vw_companies",
+                                                      "type":  "view",
+                                                      "key-fields":  [
+                                                                         "code"
+                                                                     ]
+                                                  },
+                                       "graphql":  {
+                                                       "enabled":  true,
+                                                       "type":  {
+                                                                    "singular":  "company",
+                                                                    "plural":  "companies"
+                                                                }
+                                                   },
+                                       "rest":  {
+                                                    "enabled":  true
+                                                },
+                                       "permissions":  [
+                                                           {
+                                                               "role":  "anonymous",
+                                                               "actions":  [
+                                                                               {
+                                                                                   "action":  "read"
+                                                                               }
+                                                                           ]
+                                                           }
+                                                       ]
+                                   },
+                     "health":  {
+                                    "source":  {
+                                                   "object":  "dbo.vw_health",
+                                                   "type":  "view",
+                                                   "key-fields":  [
+                                                                      "id"
+                                                                  ]
+                                               },
+                                    "graphql":  {
+                                                    "enabled":  true,
+                                                    "type":  {
+                                                                 "singular":  "health",
+                                                                 "plural":  "healths"
+                                                             }
+                                                },
+                                    "rest":  {
+                                                 "enabled":  true
+                                             },
+                                    "permissions":  [
+                                                        {
+                                                            "role":  "anonymous",
+                                                            "actions":  [
+                                                                            {
+                                                                                "action":  "read"
+                                                                            }
+                                                                        ]
+                                                        }
+                                                    ]
+                                },
+                     "sales_daily":  {
+                                         "source":  {
+                                                        "object":  "dbo.vw_sales_daily",
+                                                        "type":  "view",
+                                                        "key-fields":  [
+                                                                           "tenant_id",
+                                                                           "dt_ref"
+                                                                       ]
+                                                    },
+                                         "graphql":  {
+                                                         "enabled":  true,
+                                                         "type":  {
+                                                                      "singular":  "sales_daily",
+                                                                      "plural":  "sales_dailies"
+                                                                  }
+                                                     },
+                                         "rest":  {
+                                                      "enabled":  true
+                                                  },
+                                         "permissions":  [
+                                                             {
+                                                                 "role":  "anonymous",
+                                                                 "actions":  [
+                                                                                 {
+                                                                                     "action":  "read"
+                                                                                 }
+                                                                             ]
+                                                             }
+                                                         ]
+                                     },
+                     "sales_by_sku":  {
+                                          "source":  {
+                                                         "object":  "dbo.vw_sales_by_sku",
+                                                         "type":  "view",
+                                                         "key-fields":  [
+                                                                            "tenant_id",
+                                                                            "dt_ref",
+                                                                            "id_sku"
+                                                                        ]
+                                                     },
+                                          "graphql":  {
+                                                          "enabled":  true,
+                                                          "type":  {
+                                                                       "singular":  "sales_by_sku",
+                                                                       "plural":  "sales_by_skus"
+                                                                   }
+                                                      },
+                                          "rest":  {
+                                                       "enabled":  true
+                                                   },
+                                          "permissions":  [
+                                                              {
+                                                                  "role":  "anonymous",
+                                                                  "actions":  [
+                                                                                  {
+                                                                                      "action":  "read"
+                                                                                  }
+                                                                              ]
+                                                              }
+                                                          ]
+                                      },
+                     "coverage_city":  {
+                                           "source":  {
+                                                          "object":  "dbo.vw_coverage_city",
+                                                          "type":  "view",
+                                                          "key-fields":  [
+                                                                             "tenant_id",
+                                                                             "dt_ref",
+                                                                             "ds_cidade"
+                                                                         ]
+                                                      },
+                                           "graphql":  {
+                                                           "enabled":  true,
+                                                           "type":  {
+                                                                        "singular":  "coverage_city",
+                                                                        "plural":  "coverage_cities"
+                                                                    }
+                                                       },
+                                           "rest":  {
+                                                        "enabled":  true
+                                                    },
+                                           "permissions":  [
+                                                               {
+                                                                   "role":  "anonymous",
+                                                                   "actions":  [
+                                                                                   {
+                                                                                       "action":  "read"
+                                                                                   }
+                                                                               ]
+                                                               }
+                                                           ]
+                                       },
+                     "stock_position":  {
+                                            "source":  {
+                                                           "object":  "dbo.vw_stock_position",
+                                                           "type":  "view",
+                                                           "key-fields":  [
+                                                                              "tenant_id",
+                                                                              "id_sku"
+                                                                          ]
+                                                       },
+                                            "graphql":  {
+                                                            "enabled":  true,
+                                                            "type":  {
+                                                                         "singular":  "stock_position",
+                                                                         "plural":  "stock_positions"
+                                                                     }
+                                                        },
+                                            "rest":  {
+                                                         "enabled":  true
+                                                     },
+                                            "permissions":  [
+                                                                {
+                                                                    "role":  "anonymous",
+                                                                    "actions":  [
+                                                                                    {
+                                                                                        "action":  "read"
+                                                                                    }
+                                                                                ]
+                                                                }
+                                                            ]
+                                        },
+                     "produtos":  {
+                                      "source":  {
+                                                     "object":  "dbo.vw_produtos",
+                                                     "type":  "view",
+                                                     "key-fields":  [
+                                                                        "id_dim_prod"
+                                                                    ]
+                                                 },
+                                      "graphql":  {
+                                                      "enabled":  true,
+                                                      "type":  {
+                                                                   "singular":  "produtos",
+                                                                   "plural":  "produtos"
+                                                               }
+                                                  },
+                                      "rest":  {
+                                                   "enabled":  true
+                                               },
+                                      "permissions":  [
+                                                          {
+                                                              "role":  "anonymous",
+                                                              "actions":  [
+                                                                              {
+                                                                                  "action":  "read"
+                                                                              }
+                                                                          ]
+                                                          }
+                                                      ]
+                                  },
+                     "venda_prod":  {
+                                        "source":  {
+                                                       "object":  "dbo.vw_venda_prod",
+                                                       "type":  "view",
+                                                       "key-fields":  [
+                                                                          "EMPRESA",
+                                                                          "DATA_VENDA",
+                                                                          "NUMERO_PEDIDO",
+                                                                          "SKU_PRODUTO"
+                                                                      ]
+                                                   },
+                                        "graphql":  {
+                                                        "enabled":  true,
+                                                        "type":  {
+                                                                     "singular":  "venda_prod",
+                                                                     "plural":  "venda_prods"
+                                                                 }
+                                                    },
+                                        "rest":  {
+                                                     "enabled":  true
+                                                 },
+                                        "permissions":  [
+                                                            {
+                                                                "role":  "anonymous",
+                                                                "actions":  [
+                                                                                {
+                                                                                    "action":  "read"
+                                                                                }
+                                                                            ]
+                                                            }
+                                                        ]
+                                    },
+                     "sales_product_detail":  {
+                                                  "source":  {
+                                                                 "object":  "dbo.vw_sales_product_detail_api",
+                                                                 "type":  "view",
+                                                                 "key-fields":  [
+                                                                                    "id_linha"
+                                                                                ]
+                                                             },
+                                                  "graphql":  {
+                                                                  "enabled":  true,
+                                                                  "type":  {
+                                                                               "singular":  "sales_product_detail",
+                                                                               "plural":  "sales_product_details"
+                                                                           }
+                                                              },
+                                                  "rest":  {
+                                                               "enabled":  true
+                                                           },
+                                                  "permissions":  [
+                                                                      {
+                                                                          "role":  "anonymous",
+                                                                          "actions":  [
+                                                                                          {
+                                                                                              "action":  "read"
+                                                                                          }
+                                                                                      ]
+                                                                      }
+                                                                  ]
+                                              }
+                 }
 }

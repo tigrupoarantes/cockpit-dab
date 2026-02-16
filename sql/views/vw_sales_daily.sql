@@ -11,9 +11,13 @@ AS
   TODO: ajustar FROM/JOIN conforme tabelas fato/dim reais do datalake.
 */
 SELECT
-  CAST(NULL AS int)           AS tenant_id,
-  CAST(NULL AS date)          AS dt_ref,
-  CAST(NULL AS decimal(18,2)) AS vl_venda,
-  CAST(NULL AS int)           AS qt_pedidos
-WHERE 1 = 0;
+  v.tenant_id                                        AS tenant_id,
+  v.dt_ref                                           AS dt_ref,
+  CAST(SUM(v.qt_vendida * v.vl_unit_venda) AS numeric(18,4)) AS vl_venda,
+  COUNT(DISTINCT v.numero_pedido)                    AS qt_pedidos
+FROM dbo.vw_sales_product_detail v
+GROUP BY
+  v.tenant_id,
+  v.dt_ref;
 GO
+

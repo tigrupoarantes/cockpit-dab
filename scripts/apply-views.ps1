@@ -156,6 +156,13 @@ $files = Get-ChildItem -LiteralPath $viewsDir -Filter '*.sql' |
   Sort-Object Name
 if (-not $files) { throw "Nenhum arquivo .sql encontrado em $viewsDir" }
 
+# Dependências: vw_empresa_dim é base para outras views (ex.: vw_companies e *_api).
+# Aplique ela primeiro para evitar falha por objeto inexistente.
+$empresaDim = $files | Where-Object { $_.Name -ieq 'vw_empresa_dim.sql' } | Select-Object -First 1
+if ($empresaDim) {
+  $files = @($empresaDim) + @($files | Where-Object { $_.FullName -ne $empresaDim.FullName })
+}
+
 # As views do projeto são criadas no schema "dbo".
 $schemaCheckSql = "SELECT IIF(EXISTS(SELECT 1 FROM sys.schemas WHERE name='dbo'),1,0) AS has_dbo_schema, HAS_PERMS_BY_NAME('dbo','SCHEMA','ALTER') AS can_alter_dbo_schema;"
 $schemaHasDbo = [int](Invoke-DbScalar -ConnectionString $connectionString -Sql "SELECT IIF(EXISTS(SELECT 1 FROM sys.schemas WHERE name='dbo'),1,0);")

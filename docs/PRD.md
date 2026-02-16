@@ -6,6 +6,50 @@ Plataforma alvo: Windows Server 2019 (produção) + PC (desenvolvimento)
 Banco: SQL Server 2017 (datalake) — sem duplicar dados no Supabase  
 Princípio: simples, seguro, rápido; “Apple-like”: poucas telas, pouca fricção, previsível.
 
+## 0) Status atual (16/02/2026)
+
+Este PRD descreve o produto e também registra o estado atual entregue.
+
+**Produção (IIS + HTTPS)**
+
+- Publicação: IIS 10 (Windows Server) com ARR/URL Rewrite fazendo proxy para o DAB local.
+- Base URL pública: `https://api.grupoarantes.emp.br/v1`
+- Autenticação (MVP atual): header obrigatório `X-API-Key` validado no **IIS**.
+
+**Backend local (DAB)**
+
+- DAB (REST): `http://localhost:5000/api`
+- Config: `dab/dab-config.json`
+- Versão do schema: `v1.6.87` (compatível com o `dab` instalado)
+
+**Operação / Monitoramento (entregue)**
+
+- Watchdog: Scheduled Task `Cockpit-DAB-Watchdog` (executa como `SYSTEM`).
+- Painel: `http://localhost/status/` (HTML estático servido pelo IIS).
+- Artefatos do painel:
+  - `status.json` (saúde do DAB + healthchecks)
+  - `catalog.json` (catálogo de views no SQL vs entidades expostas no DAB)
+
+**Catálogo / Onboarding (entregue)**
+
+- O watchdog consulta `sys.views` (schema `dbo`) e lista views.
+- O painel destaca `Views novas (no SQL, fora do DAB)`.
+- Script de onboard: `scripts/onboard-dab-view.ps1` (adiciona entidade no `dab-config.json` e opcionalmente valida/reinicia o DAB).
+
+**Entidades atualmente expostas (DAB REST)**
+
+- `health` → `dbo.vw_health`
+- `companies` → `dbo.vw_companies`
+- `sales_daily` → `dbo.vw_sales_daily`
+- `sales_by_sku` → `dbo.vw_sales_by_sku`
+- `coverage_city` → `dbo.vw_coverage_city`
+- `stock_position` → `dbo.vw_stock_position`
+- `produtos` → `dbo.vw_produtos`
+- `venda_prod` → `dbo.vw_venda_prod`
+- `sales_product_detail` → `dbo.vw_sales_product_detail`
+
+Referência de consumo e troubleshooting: `docs/SERVICE_API.md`.
+
 ## 1) Visão do produto
 
 Criar uma ponte de API read-only entre o datalake (SQL Server 2017) e o Cockpit, usando Microsoft Data API Builder (DAB), de forma que o app consuma dados em tempo real (ou quase real) sem replicação e sem custos desnecessários.
@@ -105,9 +149,10 @@ Cada view deve:
 
 ### 6.1 Segurança (MVP)
 
-- Tráfego em rede interna (mesma rede) + allowlist de IP (ou VPN)
-- Credenciais do banco via variável de ambiente (não hardcoded)
-- Usuário SQL read-only dedicado (ex.: svc_cockpit_api)
+- Tráfego em rede interna (mesma rede) + allowlist de IP (ou VPN) quando aplicável.
+- Autenticação atual em produção: `X-API-Key` validado no **IIS** (não no DAB).
+- Credenciais do banco via variável de ambiente (`DAB_CONNECTION_STRING` ou `MSSQL_*`), nunca hardcoded.
+- Usuário SQL read-only dedicado (ex.: `datalake_consulta`) com `SELECT` apenas nas views.
 
 ### 6.2 Performance
 
@@ -117,15 +162,16 @@ Cada view deve:
 
 ### 6.3 Confiabilidade
 
-- Serviço iniciado automaticamente no servidor (Windows Service/Task Scheduler/NSSM)
-- Logs básicos e healthcheck
-- Procedimento de rollback simples (troca de pasta / versão)
+- Serviço iniciado automaticamente no servidor via Scheduled Task (Task Scheduler).
+- Watchdog mantém o DAB ativo (reinicia se cair) e atualiza `status.json`/`catalog.json` periodicamente.
+- Logs básicos e healthcheck (ver `logs/`).
+- Rollback: reverter `dab/dab-config.json` e/ou views no SQL e reiniciar o DAB.
 
 ## 7) Arquitetura
 
 ### 7.1 Alto nível
 
-Cockpit → (HTTPS/internal) → DAB (Windows Server 2019) → SQL Server 2017 (Datalake)
+Cockpit → (HTTPS) → IIS (proxy /v1/*) → DAB (`localhost:5000/api/*`) → SQL Server (Datalake)
 
 ### 7.2 Ambiente de desenvolvimento
 
@@ -157,11 +203,15 @@ cockpit-dab/
       vw_stock_position.sql
   scripts/
     run-local.ps1
-    deploy-server.ps1
-    healthcheck.ps1
+    ensure-dab-running.ps1
+    dab-watchdog.ps1
+    install-watchdog-task.ps1
+    install-status-page.ps1
+    onboard-dab-view.ps1
     test-endpoints.ps1
   docs/
     PRD.md
+    TECHNICAL.md
     SCHEMA.md
     schema_columns.csv
     schema_fks.csv
@@ -278,15 +328,16 @@ Critérios de aceite
 
 ## 13) Checklist de “Definition of Done”
 
-- Consegue rodar DAB local no PC e consultar endpoints
-- Views padronizadas e revisadas pelo DBA
-- DAB no Windows Server com start automático
-- Credenciais via variáveis de ambiente
-- CORS/allowlist ok
-- Documentação mínima no docs/
+- Consegue acessar `http://localhost:5000/api/health` no servidor.
+- Consegue acessar `https://api.grupoarantes.emp.br/v1/health` com `X-API-Key`.
+- Watchdog instalado e rodando: Scheduled Task `Cockpit-DAB-Watchdog`.
+- Painel `http://localhost/status/` mostra status e catálogo (SQL x DAB).
+- Credenciais do banco via variáveis de ambiente / `.env` no repo.
+- Documentação mínima em `docs/` (consumo + operação).
 
-## Próximo passo imediato (para o VSCode já ter contexto)
+## Próximos passos (backlog sugerido)
 
-- Salve este PRD como docs/PRD.md dentro do projeto.
-- Crie também docs/conventions.md com os padrões de naming/filtros (posso te entregar o conteúdo pronto se quiser).
-- Gere schema_columns.csv e schema_fks.csv pelo VSCode (mssql).
+- Padronizar contrato de auth (opcional): avaliar migrar para `Authorization: Bearer` no IIS, mantendo compatibilidade.
+- Hardening de acesso ao painel `/status` fora do `localhost` (se necessário): allowlist, basic auth ou mover para hostname interno.
+- Padronizar chaves (`key-fields`) com validação assistida por script (checando unicidade/NULLs por amostragem) antes de publicar.
+- Revisar limites de paginação (`max-page-size`) conforme carga real.

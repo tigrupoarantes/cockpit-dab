@@ -372,20 +372,35 @@ if ($dabCmd) {
       )
     }
 
-    $asset = $null
-    if ($manifest.assets) {
-      $asset = $manifest.assets |
-        Where-Object { $_.name -match 'win-x64' -and $_.name -match 'net8\.0' -and $_.name -match '\\.zip$' } |
-        Select-Object -First 1
+    $assetUrl = $null
+    $assetName = $null
+
+    $entry = $manifest
+    if ($manifest -is [System.Array]) {
+      $entry = $manifest | Where-Object { $_.version -eq 'latest' } | Select-Object -First 1
+      if (-not $entry) { $entry = $manifest | Select-Object -First 1 }
     }
 
-    if (-not $asset -or -not $asset.url) {
+    if ($entry -and $entry.files -and $entry.files.'win-x64' -and $entry.files.'win-x64'.url) {
+      $assetUrl = [string]$entry.files.'win-x64'.url
+      $assetName = [System.IO.Path]::GetFileName($assetUrl)
+    } elseif ($entry -and $entry.assets) {
+      $asset = $entry.assets |
+        Where-Object { $_.name -match 'win-x64' -and $_.name -match 'net8\.0' -and $_.name -match '\\.zip$' } |
+        Select-Object -First 1
+      if ($asset -and $asset.url) {
+        $assetUrl = [string]$asset.url
+        $assetName = [string]$asset.name
+      }
+    }
+
+    if (-not $assetUrl -or -not $assetName) {
       throw 'Não consegui localizar o asset win-x64 no dab-manifest.json. Verifique acesso à internet/GitHub.'
     }
 
-    $zipPath = Join-Path $toolsDir $asset.name
-    Write-Output "Baixando DAB: $($asset.url)"
-    $iwrParams = @{ Uri = $asset.url; OutFile = $zipPath; ErrorAction = 'Stop' }
+    $zipPath = Join-Path $toolsDir $assetName
+    Write-Output "Baixando DAB: $assetUrl"
+    $iwrParams = @{ Uri = $assetUrl; OutFile = $zipPath; ErrorAction = 'Stop' }
     if ((Get-Command Invoke-WebRequest).Parameters.ContainsKey('UseBasicParsing')) {
       $iwrParams.UseBasicParsing = $true
     }
@@ -394,14 +409,37 @@ if ($dabCmd) {
     Write-Output 'Extraindo...'
     Expand-Archive -LiteralPath $zipPath -DestinationPath $toolsDir -Force
 
-    # Procura dab.exe extraído
-    $found = Get-ChildItem -LiteralPath $toolsDir -Recurse -Filter 'dab.exe' | Select-Object -First 1
-    if (-not $found) {
-      throw 'dab.exe não encontrado após extração.'
+    function Test-DabLikeExe([string]$Path) {
+      if (-not $Path -or -not (Test-Path -LiteralPath $Path)) { return $false }
+      try {
+        & $Path --version *> $null
+        return ($LASTEXITCODE -eq 0)
+      } catch { return $false }
     }
 
-    if ($found.FullName -ne $dabExe) {
-      Copy-Item -LiteralPath $found.FullName -Destination $dabExe -Force
+    $preferred = @(
+      (Join-Path $toolsDir 'dab.exe'),
+      (Join-Path $toolsDir 'Microsoft.DataApiBuilder.exe'),
+      (Join-Path $toolsDir 'Azure.DataApiBuilder.Service.exe')
+    )
+
+    $foundPath = $null
+    foreach ($p in $preferred) {
+      if (Test-DabLikeExe -Path $p) { $foundPath = $p; break }
+    }
+
+    if (-not $foundPath) {
+      $found = Get-ChildItem -LiteralPath $toolsDir -Recurse -File |
+        Where-Object { $_.Name -in @('dab.exe','Microsoft.DataApiBuilder.exe','Azure.DataApiBuilder.Service.exe') } |
+        Where-Object { $_.FullName -notmatch '\\\.store\\' } |
+        Select-Object -First 1
+      if ($found -and (Test-DabLikeExe -Path $found.FullName)) { $foundPath = $found.FullName }
+    }
+
+    if (-not $foundPath) { throw 'Nenhum executável válido do DAB foi encontrado após extração.' }
+
+    if ($foundPath -ne $dabExe) {
+      Copy-Item -LiteralPath $foundPath -Destination $dabExe -Force
     }
   }
   }

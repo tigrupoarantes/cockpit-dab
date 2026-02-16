@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Status - Cockpit DAB</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 16px; }
+    h1 { margin: 0 0 12px 0; font-size: 20px; }
+    .meta { color: #444; margin-bottom: 12px; }
+    table { border-collapse: collapse; width: 100%; max-width: 860px; }
+    td { border: 1px solid #ddd; padding: 8px; vertical-align: top; }
+    td.k { width: 260px; background: #f6f6f6; font-weight: 600; }
+    .ok { color: #0a6; font-weight: 700; }
+    .bad { color: #c00; font-weight: 700; }
+    .muted { color: #666; }
+    pre { margin: 0; white-space: pre-wrap; word-break: break-word; }
+  </style>
+</head>
+<body>
+  <h1>Status - Cockpit DAB</h1>
+  <div class="meta">Atualiza automaticamente a cada 10s. Fonte: <span class="muted">status.json</span></div>
+
+  <table>
+    <tr><td class="k">Última atualização</td><td id="ts" class="muted">-</td></tr>
+    <tr><td class="k">Watchdog OK</td><td id="ensure">-</td></tr>
+    <tr><td class="k">Processo DAB</td><td id="proc">-</td></tr>
+    <tr><td class="k">Porta 5000</td><td id="port">-</td></tr>
+    <tr><td class="k">Health local</td><td id="local">-</td></tr>
+    <tr><td class="k">Health público (sem chave)</td><td id="pubnokey">-</td></tr>
+    <tr><td class="k">Health público (com chave, server-side)</td><td id="pubkey">-</td></tr>
+    <tr><td class="k">Erro (se houver)</td><td><pre id="err">-</pre></td></tr>
+  </table>
+
+  <h1 style="margin-top: 18px; font-size: 18px;">Catálogo (Datalake x DAB)</h1>
+  <div class="meta">Fonte: <span class="muted">catalog.json</span></div>
+
+  <table>
+    <tr><td class="k">SQL (views em dbo)</td><td id="sqlviews">-</td></tr>
+    <tr><td class="k">DAB (entidades expostas)</td><td id="dabentities">-</td></tr>
+    <tr><td class="k">Views novas (no SQL, fora do DAB)</td><td><pre id="newviews">-</pre></td></tr>
+    <tr><td class="k">Lista de views (SQL)</td><td><pre id="sqlviewslist">-</pre></td></tr>
+    <tr><td class="k">Mapa atual (DAB)</td><td><pre id="dabmap">-</pre></td></tr>
+    <tr><td class="k">Erro SQL (se houver)</td><td><pre id="sqlerr">-</pre></td></tr>
+  </table>
+
+<script>
+  const el = (id) => document.getElementById(id);
+  const fmt = (v) => (v === null || v === undefined || v === '') ? '-' : String(v);
+  const badge = (ok, textOk, textBad) => ok ? `<span class="ok">${textOk}</span>` : `<span class="bad">${textBad}</span>`;
+
+  async function refresh() {
+    try {
+      const r = await fetch('./status.json?ts=' + Date.now(), { cache: 'no-store' });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const s = await r.json();
+
+      el('ts').textContent = fmt(s.timestamp);
+      el('ensure').innerHTML = badge(!!(s.ensure && s.ensure.ok), 'OK', 'FALHA');
+
+      const pr = s.dab || {};
+      el('proc').innerHTML = pr.processRunning ? `<span class="ok">Rodando</span> (PID ${fmt(pr.pid)})` : `<span class="bad">Parado</span>`;
+      el('port').innerHTML = (pr.portOpen ? `<span class="ok">Aberta</span>` : `<span class="bad">Fechada</span>`) + ` (:${fmt(pr.port)})`;
+
+      const h = s.health || {};
+      el('local').textContent = `${fmt(h.localStatus)} - ${fmt(h.localUrl)}`;
+      el('pubnokey').textContent = `${fmt(h.publicStatusNoKey)} - ${fmt(h.publicUrl)}`;
+      el('pubkey').textContent = `${fmt(h.publicStatusWithKey)} - ${fmt(h.publicUrl)}`;
+
+      el('err').textContent = fmt((s.ensure || {}).error);
+
+      // Catalog
+      try {
+        const rc = await fetch('./catalog.json?ts=' + Date.now(), { cache: 'no-store' });
+        if (!rc.ok) throw new Error('HTTP ' + rc.status);
+        const c = await rc.json();
+
+        const sqlOk = !!(c.sql && c.sql.ok);
+        const sqlCount = (c.sql && Array.isArray(c.sql.views)) ? c.sql.views.length : 0;
+        el('sqlviews').innerHTML = sqlOk ? `<span class="ok">OK</span> (${sqlCount} views)` : `<span class="bad">FALHA</span>`;
+
+        const sqlList = (c.sql && Array.isArray(c.sql.views)) ? c.sql.views : [];
+        el('sqlviewslist').textContent = sqlList.length
+          ? sqlList.map(v => `${v.name}  (mod: ${v.modify_date})`).join('\n')
+          : '-';
+
+        const entCount = (c.dab && Array.isArray(c.dab.entities)) ? c.dab.entities.length : 0;
+        el('dabentities').innerHTML = `<span class="ok">OK</span> (${entCount} entidades)`;
+
+        const entList = (c.dab && Array.isArray(c.dab.entities)) ? c.dab.entities : [];
+        el('dabmap').textContent = entList.length
+          ? entList.map(e => `${e.entity}  ->  ${e.source_object || '-'}`).join('\n')
+          : '-';
+
+        const missing = (c.diff && Array.isArray(c.diff.viewsNotExposed)) ? c.diff.viewsNotExposed : [];
+        el('newviews').textContent = missing.length ? missing.join('\n') : '-';
+
+        el('sqlerr').textContent = fmt((c.sql || {}).error);
+      } catch (e2) {
+        el('sqlviews').innerHTML = `<span class="bad">ERRO</span>`;
+        el('sqlerr').textContent = String(e2);
+      }
+    } catch (e) {
+      el('ensure').innerHTML = `<span class="bad">ERRO</span>`;
+      el('err').textContent = String(e);
+    }
+  }
+
+  refresh();
+  setInterval(refresh, 10000);
+</script>
+</body>
+</html>

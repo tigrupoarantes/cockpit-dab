@@ -11,7 +11,7 @@ AS
   - Qualifique schemas (dbo.) para evitar resolucao por default schema.
   - Colunas foram normalizadas para nomes previsiveis e faceis de filtrar via parametros (DAB).
 */
-SELECT DISTINCT
+SELECT
   venda.sk_venda                                                  AS id_venda,
   venda.cod_empresa                                              AS tenant_id,
   tempo.ano                                                      AS ano_venda,
@@ -20,6 +20,7 @@ SELECT DISTINCT
   venda.hora_venda                                               AS hr_venda,
 
   cliente.cpf_cnpj                                               AS cpf_cnpj_cliente,
+  cliente.cod_cliente                                            AS cod_cliente,
   cliente.razao_social                                           AS razao_social_cliente,
   cliente.endereco                                               AS endereco_cliente,
   cliente.bairro                                                 AS bairro_cliente,
@@ -28,7 +29,8 @@ SELECT DISTINCT
   cliente.uf                                                     AS uf_cliente,
   cliente.pais                                                   AS pais_cliente,
   cliente.numero                                                 AS numero_endereco_cliente,
-  CONCAT(CAST(telefone.ddd AS varchar(4)), CAST(telefone.numero AS varchar(15))) AS telefone_comercial_cliente,
+  IIF(telefone.numero IS NULL AND telefone.ddd IS NULL, NULL, CONCAT(CAST(telefone.ddd AS varchar(4)), CAST(telefone.numero AS varchar(15)))) AS telefone_comercial_cliente,
+  cliente.email                                                  AS email_cliente,
   cliente.segmento                                               AS segmento_cliente,
   cliente.latitude                                               AS latitude_cliente,
   cliente.longitude                                              AS longitude_cliente,
@@ -45,6 +47,7 @@ SELECT DISTINCT
   venda.qtde_venda                                               AS qt_vendida,
   produto_custo.custo_unitario                                   AS vl_custo_unitario,
   venda.preco_unit                                               AS vl_unit_venda,
+  venda.vl_unit_pedido                                           AS vl_unit_pedido,
   venda.vl_unit_tabela                                           AS vl_unit_tabela,
 
   vendedor.nome_vendedor                                         AS vendedor,
@@ -52,19 +55,31 @@ SELECT DISTINCT
   vendedor.nome_gerente                                          AS gerente,
   venda.tipo_ped                                                 AS tipo_pedido,
   venda.situacao                                                 AS situacao,
-  venda.numero_nf                                                AS numero_nf
+  venda.numero_nf                                                AS numero_nf,
+  venda.numero_pedido                                            AS numero_pedido
 FROM dbo.fact_venda_produto venda
 INNER JOIN dbo.dim_tempo tempo
   ON tempo.sk_tempo = venda.sk_tempo
 INNER JOIN dbo.dim_cliente cliente
   ON cliente.sk_cliente = venda.sk_cliente
-LEFT JOIN dbo.dim_telefone telefone
-  ON telefone.sk_cliente = cliente.sk_cliente
- AND telefone.tipo_tel = 'COMERCIAL'
+OUTER APPLY (
+  SELECT TOP (1)
+    t.ddd,
+    t.numero
+  FROM dbo.dim_telefone t
+  WHERE t.sk_cliente = cliente.sk_cliente
+    AND t.tipo_tel = 'COMERCIAL'
+  ORDER BY t.sk_telefone
+) telefone
 INNER JOIN dbo.dim_produto produto
   ON produto.sk_prod = venda.sk_produto
-INNER JOIN dbo.dim_prod_unid produto_unid
-  ON produto_unid.sk_produto = venda.sk_produto
+OUTER APPLY (
+  SELECT TOP (1)
+    pu.sk_fornecedor
+  FROM dbo.dim_prod_unid pu
+  WHERE pu.sk_produto = venda.sk_produto
+  ORDER BY pu.sk_fornecedor
+) produto_unid
 INNER JOIN dbo.dim_fornecedor fornecedor
   ON fornecedor.sk_fornecedor = produto_unid.sk_fornecedor
 INNER JOIN dbo.fact_produto_custo produto_custo

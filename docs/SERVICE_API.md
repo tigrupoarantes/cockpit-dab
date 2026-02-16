@@ -60,6 +60,65 @@ Recomendação para o app:
 - Para requests com body (não usado no MVP, mas padrão HTTP):
   - `Content-Type: application/json; charset=utf-8`
 
+## 4.1) Como testar a API “por aqui” (sem travar no X-API-Key)
+
+Existem **dois jeitos** de testar, dependendo se você quer passar pelo IIS (produção) ou falar direto com o DAB (local).
+
+### Opção A — Teste local (recomendado para debug rápido)
+
+No servidor/PC onde o DAB está rodando, use a base local **sem IIS** (normalmente não exige `X-API-Key`):
+
+- Base: `http://localhost:5000/api`
+
+Exemplos:
+
+```powershell
+Invoke-RestMethod -Uri "http://localhost:5000/api/health" -TimeoutSec 15
+Invoke-RestMethod -Uri "http://localhost:5000/api/companies" -TimeoutSec 15
+```
+
+Script pronto:
+
+```powershell
+cd C:\Github\cockpit-dab
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-endpoints.ps1 \
+  -BaseUrl http://localhost:5000/api
+```
+
+### Opção B — Teste via IIS (produção / mesma rota que o app usa)
+
+Quando você testa via IIS (`/v1`), **o IIS exige `X-API-Key`**.
+
+- Base: `https://api.grupoarantes.emp.br/v1`
+
+Exemplos:
+
+```powershell
+$base = "https://api.grupoarantes.emp.br/v1"
+$headers = @{ "X-API-Key" = "<SUA_CHAVE>"; "Accept" = "application/json" }
+Invoke-RestMethod -Uri "$base/health" -Headers $headers -TimeoutSec 15
+Invoke-RestMethod -Uri "$base/companies" -Headers $headers -TimeoutSec 15
+```
+
+Ou usando o script (sem hardcode — passe a chave por parâmetro ou por variável de ambiente):
+
+```powershell
+cd C:\Github\cockpit-dab
+$env:DAB_API_KEY = "<SUA_CHAVE>"
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-endpoints.ps1 \
+  -BaseUrl https://api.grupoarantes.emp.br/v1 \
+  -ApiKey $env:DAB_API_KEY
+```
+
+### Por que não testar “dentro do index.html” com a chave?
+
+Porque a página `iis/status/index.html` é **estática**. Se você colocar a `X-API-Key` ali, ela fica exposta para qualquer pessoa que consiga abrir o `/status`.
+
+Se você precisa ver “como vem a leitura” no navegador:
+
+- Prefira testar endpoints locais (`http://localhost:5000/api/...`) via PowerShell/curl.
+- Ou use DevTools → Network e “Copy as cURL” para reproduzir a chamada com headers (sem persistir a chave em arquivo).
+
 ## 5) Endpoints disponíveis
 
 A lista abaixo reflete as entidades configuradas no DAB (ver [dab/dab-config.json](../dab/dab-config.json)).
@@ -240,6 +299,44 @@ Se o CNPJ for obrigatório para identificação, precisamos que o datalake dispo
 - **404**: caminho errado (em produção use `/v1/...`, em local use `/api/...`).
 - **502/503**: IIS/proxy não conseguiu falar com o DAB (backend parado/porta errada).
 
+## 10.0) Monitoramento (Painel de Status)
+
+Existe um painel simples para verificar se o DAB está rodando e se os health-checks estão respondendo.
+
+- **No próprio servidor IIS (recomendado):** `http://localhost/status/`
+- **Pela rede (IP do servidor):** `http://192.168.1.39/status/`
+
+Observação: o hostname público `https://api.grupoarantes.emp.br/` tem uma regra de `X-API-Key` no IIS. Por isso, acessar `https://api.grupoarantes.emp.br/status/` pode retornar **401** (isso é esperado). Para uso interno, prefira `http://localhost/status/` ou `http://<IP>/status/`.
+
+### Watchdog (não deixar o DAB parar após reboot)
+
+Para manter o DAB ativo após reinício do servidor, instale:
+
+```powershell
+cd C:\Github\cockpit-dab
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\install-status-page.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\install-watchdog-task.ps1
+```
+
+Isso cria a Scheduled Task `Cockpit-DAB-Watchdog` (executa como `SYSTEM`) e mantém um loop de monitoramento, atualizando `status.json` a cada ~30s e (re)iniciando o DAB caso necessário.
+
+### Como expor uma nova view no DAB
+
+Quando o DBA criar uma nova view no datalake, ela vai aparecer no painel em **“Views novas (no SQL, fora do DAB)”**.
+
+Para expor a view via DAB, use o script:
+
+```powershell
+cd C:\Github\cockpit-dab
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\onboard-dab-view.ps1 \
+  -ViewName vw_sales_product_detail \
+  -EntityName sales_product_detail \
+  -KeyFields tenant_id,dt_ref,id_sku \
+  -RestartDab
+```
+
+Importante: `KeyFields` precisa ser um conjunto de colunas que exista na view e identifique uma linha de forma única (senão o DAB pode falhar ao iniciar).
+
 Checklist rápido para erro **404** no Cockpit:
 - Abra DevTools → Network e copie a URL chamada ao clicar em “Testar Conexão”.
 - Se aparecer `/v1/v1/...`, remova o sufixo `/v1` do `api_base_url`.
@@ -254,7 +351,7 @@ Casos comuns que geram **404**:
 - Chamando `.../health` (root)
 - Chamando `.../api/health` (path interno do DAB)
 
-Exemplo de regras adicionais (URL Rewrite) para aceitar esses formatos e encaminhar para o DAB:
+Exemplo de regras adicionais (URL Rewrite) para aceitar esse formatos e encaminhar para o DAB:
 
 ```xml
 <!-- Redireciona /v1 (sem rota) para /v1/health -->

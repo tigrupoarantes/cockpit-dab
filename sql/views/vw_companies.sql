@@ -16,12 +16,12 @@ AS
 
   Campos extras são opcionais e podem ser preenchidos futuramente quando houver tabela/dimensão de empresa.
 */
-SELECT DISTINCT
-  CAST(v.cod_empresa AS varchar(10))   AS code,
-  CAST(v.nome_empresa AS varchar(200)) AS name,
-  CAST(NULL AS varchar(18))           AS cnpj,
+SELECT
+  CAST(e.cod_empresa AS varchar(10))    AS code,
+  CAST(e.nome_empresa AS varchar(200))  AS name,
+  CAST(e.cnpj_empresa_origem AS varchar(18)) AS cnpj,
   CAST(NULL AS varchar(20))           AS businessType,
   CAST(NULL AS varchar(20))           AS segmentMode
-FROM dbo.dim_vendedor v
-WHERE v.cod_empresa IS NOT NULL;
+FROM dbo.vw_empresa_dim e;
 GO
+

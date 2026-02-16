@@ -14,6 +14,9 @@ tools/
 # Logs locais (debug)
 logs/
 
+# VS Code (local)
+.vscode/
+
 # OS
 Thumbs.db
 Desktop.ini

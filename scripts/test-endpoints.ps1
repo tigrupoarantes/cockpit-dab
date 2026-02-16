@@ -1,5 +1,7 @@
 param(
-  [string]$BaseUrl = 'http://localhost:5000',
+  [string]$BaseUrl = 'http://localhost:5000/api',
+  [string]$ApiKey,
+  [int]$First = 10,
   [string]$DataVenda
 )
 
@@ -9,23 +11,31 @@ if (-not $DataVenda) {
   $DataVenda = (Get-Date).AddDays(-1).ToString('yyyy-MM-dd')
 }
 
-$vendaProdUrl = ($BaseUrl + "/api/venda_prod?`$first=10")
+$base = $BaseUrl.TrimEnd('/')
+
+$headers = @{ 'Accept' = 'application/json' }
+if ($ApiKey) {
+  $headers['X-API-Key'] = $ApiKey
+}
+
+$vendaProdUrl = ($base + "/venda_prod?`$first=$First")
 
 $endpoints = @(
-  "$BaseUrl/api/health",
-  "$BaseUrl/api/companies",
-  "$BaseUrl/api/produtos",
-  "$BaseUrl/api/sales_daily",
-  "$BaseUrl/api/sales_by_sku",
-  "$BaseUrl/api/coverage_city",
-  "$BaseUrl/api/stock_position",
+  "$base/health",
+  "$base/companies",
+  "$base/produtos",
+  "$base/sales_daily",
+  "$base/sales_by_sku",
+  "$base/coverage_city",
+  "$base/stock_position",
+  "$base/sales_product_detail?`$first=$First",
   $vendaProdUrl
 )
 
 foreach ($url in $endpoints) {
   Write-Output "GET $url"
   try {
-    $resp = Invoke-RestMethod -Method Get -Uri $url -TimeoutSec 15
+    $resp = Invoke-RestMethod -Method Get -Uri $url -TimeoutSec 15 -Headers $headers
     $json = $resp | ConvertTo-Json -Depth 6
     $json
   } catch {
