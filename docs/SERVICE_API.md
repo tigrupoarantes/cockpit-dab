@@ -152,22 +152,25 @@ Retorno esperado (exemplo):
 
 Status atual:
 - `venda_prod`: retorna dados (view `dbo.vw_venda_prod` → wrapper da canônica `dbo.vw_sales_product_detail`).
-- `sales_daily` e `sales_by_sku`: **stub** (compila, mas retorna 0 linhas até mapeamento final do schema).
+- `sales_daily` e `sales_by_sku`: retornam dados.
 
 ### Cobertura
 - `GET /coverage_city`
 
 Status atual:
-- `coverage_city`: **stub** (0 linhas).
+- `coverage_city`: retorna dados.
 
 ### Estoque
 - `GET /stock_position`
 
 Status atual:
-- `stock_position`: **stub** (0 linhas).
+- `stock_position`: retorna dados.
 
 ### Produtos
 - `GET /produtos`
+
+Status atual:
+- `produtos`: retorna dados (entidade `produtos` no DAB aponta para a view `dbo.vw_produtos_api`).
 
 ### Empresas
 - `GET /companies`
@@ -183,7 +186,7 @@ Exemplo (produção):
 - `https://api.grupoarantes.emp.br/v1/companies`
 
 Status atual:
-- `produtos`: **stub** (0 linhas).
+- `produtos`: retorna dados.
 
 Exemplo (produção):
 - `https://api.grupoarantes.emp.br/v1/health`
@@ -206,6 +209,9 @@ Exemplo (próxima página):
 Resposta:
 - Retorna um payload JSON com uma lista de itens.
 - Quando houver mais páginas, o DAB inclui um link/token de próxima página (ex.: `nextLink`).
+
+Observação:
+- Nesta instalação, o DAB está configurado com `next-link-relative=true`. Ou seja, quando vier `nextLink`, ele tende a ser **relativo** (ex.: `/api/produtos?...`).
 
 ## 7) Exemplos prontos (PowerShell)
 

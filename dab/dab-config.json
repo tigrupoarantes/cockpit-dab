@@ -219,7 +219,7 @@
                                         },
                      "produtos":  {
                                       "source":  {
-                                                     "object":  "dbo.vw_produtos",
+                                                     "object":  "dbo.vw_produtos_api",
                                                      "type":  "view",
                                                      "key-fields":  [
                                                                         "id_dim_prod"
