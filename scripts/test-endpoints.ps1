@@ -23,6 +23,7 @@ $vendaProdUrl = ($base + "/venda_prod?`$first=$First")
 $endpoints = @(
   "$base/health",
   "$base/companies",
+  "$base/funcionarios?`$first=$First",
   "$base/produtos",
   "$base/sales_daily",
   "$base/sales_by_sku",

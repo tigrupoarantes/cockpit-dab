@@ -172,6 +172,12 @@ Status atual:
 Status atual:
 - `produtos`: retorna dados (entidade `produtos` no DAB aponta para a view `dbo.vw_produtos_api`).
 
+### Funcionários
+- `GET /funcionarios`
+
+Status atual:
+- `funcionarios`: retorna dados (entidade `funcionarios` no DAB aponta para a view `dbo.vw_funcionarios`, derivada de `gold.vw_funcionario`).
+
 ### Empresas
 - `GET /companies`
 

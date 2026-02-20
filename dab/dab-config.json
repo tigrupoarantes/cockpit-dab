@@ -246,6 +246,35 @@
                                                           }
                                                       ]
                                   },
+                     "funcionarios":  {
+                                          "source":  {
+                                                         "object":  "dbo.vw_funcionarios",
+                                                         "type":  "view",
+                                                         "key-fields":  [
+                                                                            "id_funcionario"
+                                                                        ]
+                                                     },
+                                          "graphql":  {
+                                                          "enabled":  true,
+                                                          "type":  {
+                                                                       "singular":  "funcionario",
+                                                                       "plural":  "funcionarios"
+                                                                   }
+                                                      },
+                                          "rest":  {
+                                                       "enabled":  true
+                                                   },
+                                          "permissions":  [
+                                                              {
+                                                                  "role":  "anonymous",
+                                                                  "actions":  [
+                                                                                  {
+                                                                                      "action":  "read"
+                                                                                  }
+                                                                              ]
+                                                              }
+                                                          ]
+                                      },
                      "venda_prod":  {
                                         "source":  {
                                                        "object":  "dbo.vw_venda_prod",

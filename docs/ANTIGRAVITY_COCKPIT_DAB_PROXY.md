@@ -27,6 +27,7 @@ Base path do DAB:
 Entidades REST esperadas (paths):
 - `health`
 - `companies`
+- `funcionarios`
 - `venda_prod`
 - `sales_daily`
 - `sales_by_sku`
@@ -138,6 +139,7 @@ A Edge Function deve bloquear qualquer `path` fora da allowlist.
 Allowlist recomendada (alinhada ao DAB config atual):
 - `health`
 - `companies`
+- `funcionarios`
 - `venda_prod`
 - `sales_daily`
 - `sales_by_sku`
