@@ -35,7 +35,7 @@ SELECT
   f.data_admissao AS data_admissao,
   CASE f.primeiro_emprego
     WHEN 1 THEN N'SIM'
-    ELSE N'NÃO'
+    ELSE N'NAO'
   END AS primeiro_emprego,
   CASE f.cod_contabilizacao
     WHEN 10 THEN N'DESCONSIDERAR'
