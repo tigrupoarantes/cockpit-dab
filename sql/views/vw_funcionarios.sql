@@ -38,7 +38,7 @@ SELECT
     ELSE N'NÃO'
   END AS primeiro_emprego,
   CASE f.cod_contabilizacao
-    WHEN 10 THEN N'DESCONSIDERAR'
+
     WHEN 9  THEN N'CHOK AGRO'
     WHEN 3  THEN N'CHOK DISTRIBUIDORA'
     WHEN 4  THEN N'BROKER J. ARANTES'
@@ -63,5 +63,6 @@ LEFT JOIN silver.dim_categoria AS cat
 LEFT JOIN silver.dim_departamento AS d
   ON f.sk_departamento = d.sk_departamento
 LEFT JOIN silver.dim_funcao AS fc
-  ON f.sk_funcao = fc.sk_funcao;
+  ON f.sk_funcao = fc.sk_funcao
+WHERE f.cod_contabilizacao <> 10;
 GO

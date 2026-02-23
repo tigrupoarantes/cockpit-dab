@@ -183,7 +183,7 @@ if ($ExcludeViewFiles) {
 
 foreach ($f in $files) {
   Write-Output "Aplicando view: $($f.Name)"
-  $sql = Get-Content -LiteralPath $f.FullName -Raw
+  $sql = Get-Content -LiteralPath $f.FullName -Raw -Encoding UTF8
   Invoke-DbNonQuery -ConnectionString $connectionString -Sql $sql
 }
 
