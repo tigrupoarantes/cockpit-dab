@@ -164,7 +164,6 @@ if ($empresaDim) {
 }
 
 # As views do projeto são criadas no schema "dbo".
-$schemaCheckSql = "SELECT IIF(EXISTS(SELECT 1 FROM sys.schemas WHERE name='dbo'),1,0) AS has_dbo_schema, HAS_PERMS_BY_NAME('dbo','SCHEMA','ALTER') AS can_alter_dbo_schema;"
 $schemaHasDbo = [int](Invoke-DbScalar -ConnectionString $connectionString -Sql "SELECT IIF(EXISTS(SELECT 1 FROM sys.schemas WHERE name='dbo'),1,0);")
 $schemaCanAlter = [int](Invoke-DbScalar -ConnectionString $connectionString -Sql "SELECT HAS_PERMS_BY_NAME('dbo','SCHEMA','ALTER');")
 

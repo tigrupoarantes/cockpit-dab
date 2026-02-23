@@ -9,7 +9,7 @@ Substituir o cadastro manual de funcionários no app por uma fonte de dados API-
 
 Resultado esperado:
 - Busca de funcionários passa a usar API.
-- Lista e filtros são alimentados pela fonte oficial (`gold.vw_funcionario` via `dbo.vw_funcionarios`).
+- Lista e filtros são alimentados pela fonte oficial (`dbo.vw_funcionarios`).
 - Cadastro manual deixa de ser fonte primária.
 
 ## 2) Arquitetura de consumo
@@ -35,7 +35,12 @@ Fluxo recomendado (produção):
 - `id_funcionario` (string, chave técnica estável)
 - `cpf` (string)
 - `nome_funcionario` (string)
+- `email` (string)
+- `sexo` (string)
+- `data_nascimento` (date)
+- `idade` (number)
 - `data_admissao` (date)
+- `primeiro_emprego` (string)
 - `contabilizacao` (string)
 - `cargo` (string)
 - `categoria` (string)

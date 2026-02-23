@@ -176,7 +176,25 @@ Status atual:
 - `GET /funcionarios`
 
 Status atual:
-- `funcionarios`: retorna dados (entidade `funcionarios` no DAB aponta para a view `dbo.vw_funcionarios`, derivada de `gold.vw_funcionario`).
+- `funcionarios`: retorna dados (entidade `funcionarios` no DAB aponta para a view `dbo.vw_funcionarios`).
+
+Campos:
+- `id_funcionario`: chave técnica estável (SHA2_256)
+- `cpf`
+- `nome_funcionario`
+- `email`
+- `sexo` (MASCULINO/FEMININO/INDEFINIDO)
+- `data_nascimento`
+- `idade`
+- `data_admissao`
+- `primeiro_emprego` (SIM/NÃO)
+- `contabilizacao`
+- `cargo`
+- `categoria`
+- `departamento`
+- `funcao`
+- `cod_empresa`
+- `nome_fantasia`
 
 ### Empresas
 - `GET /companies`
