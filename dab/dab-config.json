@@ -335,6 +335,40 @@
                                                                                       ]
                                                                       }
                                                                   ]
+                                              },
+                     "verbas":  {
+                                     "source":  {
+                                                    "object":  "gold.vw_pagamento_verba_pivot_mensal",
+                                                    "type":  "view",
+                                                    "key-fields":  [
+                                                                       "razao_social",
+                                                                       "cpf",
+                                                                       "nome_funcionario",
+                                                                       "tipo_verba",
+                                                                       "ano"
+                                                                   ]
+                                                },
+                                     "graphql":  {
+                                                     "enabled":  true,
+                                                     "type":  {
+                                                                  "singular":  "verba",
+                                                                  "plural":  "verbas"
+                                                              }
+                                                 },
+                                     "rest":  {
+                                                  "enabled":  true,
+                                                  "path":  "verbas"
+                                              },
+                                     "permissions":  [
+                                                         {
+                                                             "role":  "anonymous",
+                                                             "actions":  [
+                                                                             {
+                                                                                 "action":  "read"
+                                                                             }
+                                                                         ]
+                                                         }
+                                                     ]
                                               }
                  }
 }
