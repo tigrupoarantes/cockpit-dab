@@ -62,14 +62,10 @@
     },
     "verbas": {
       "source": {
-        "object": "gold.vw_pagamento_verba_pivot_mensal",
+        "object": "dbo.vw_verbas_api",
         "type": "view",
         "key-fields": [
-          "razao_social",
-          "cpf",
-          "nome_funcionario",
-          "tipo_verba",
-          "ano"
+          "id_verba"
         ]
       },
       "rest": {
