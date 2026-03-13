@@ -14,17 +14,16 @@ GROUP BY
 ),
 
 checkin AS (
-SELECT
-    CodigoVendedor,
-    CodigoCliente,
-    Data,
-    MIN(HoraInicio) AS HoraInicio,
-    MAX(HoraFim) AS HoraFim
-FROM bronze.check_in_out_vend_chokdistribuidora
-GROUP BY
-    CodigoVendedor,
-    CodigoCliente,
-    Data
+SELECT *
+FROM (
+    SELECT *,
+        ROW_NUMBER() OVER (
+            PARTITION BY CodigoVendedor, CodigoCliente
+            ORDER BY Data DESC
+        ) AS rn
+    FROM bronze.check_in_out_vend_chokdistribuidora
+    ) t
+    WHERE rn = 1
 ),
 
 nf AS (
@@ -217,7 +216,8 @@ LEFT JOIN silver.dim_vendedor_chokdistribuidora gerente
 LEFT JOIN checkin
     ON checkin.CodigoVendedor COLLATE SQL_Latin1_General_CP1_CI_AI = vendedor.cod_vendedor
     AND checkin.CodigoCliente = cli.cd_clien
-    AND checkin.Data = cal.data
+    -- Data removida do JOIN intencionalmente: traz o ultimo checkin do par vendedor/cliente,
+    -- independente da data da venda
 
 LEFT JOIN evento_lib
     ON evento_lib.nu_ped = venda.nu_ped
