@@ -337,34 +337,64 @@
                                                                   ]
                                               },
                      "verbas":  {
-                                     "source":  {
-                                                    "object":  "dbo.vw_verbas_api",
-                                                    "type":  "view",
-                                                    "key-fields":  [
-                                                                       "id_verba"
-                                                                   ]
+                                    "source":  {
+                                                   "object":  "dbo.vw_verbas_api",
+                                                   "type":  "view",
+                                                   "key-fields":  [
+                                                                      "id_verba"
+                                                                  ]
+                                               },
+                                    "graphql":  {
+                                                    "enabled":  true,
+                                                    "type":  {
+                                                                 "singular":  "verba",
+                                                                 "plural":  "verbas"
+                                                             }
                                                 },
-                                     "graphql":  {
-                                                     "enabled":  true,
-                                                     "type":  {
-                                                                  "singular":  "verba",
-                                                                  "plural":  "verbas"
-                                                              }
-                                                 },
-                                     "rest":  {
-                                                  "enabled":  true,
-                                                  "path":  "verbas"
-                                              },
-                                     "permissions":  [
-                                                         {
-                                                             "role":  "anonymous",
-                                                             "actions":  [
-                                                                             {
-                                                                                 "action":  "read"
-                                                                             }
-                                                                         ]
-                                                         }
-                                                     ]
-                                              }
+                                    "rest":  {
+                                                 "enabled":  true,
+                                                 "path":  "verbas"
+                                             },
+                                    "permissions":  [
+                                                        {
+                                                            "role":  "anonymous",
+                                                            "actions":  [
+                                                                            {
+                                                                                "action":  "read"
+                                                                            }
+                                                                        ]
+                                                        }
+                                                    ]
+                                },
+                     "venda_diaria_chokdist":  {
+                                                   "source":  {
+                                                                  "object":  "dbo.vw_venda_diaria_chokdist",
+                                                                  "type":  "view",
+                                                                  "key-fields":  [
+                                                                                     "numero_pedido",
+                                                                                     "sku"
+                                                                                 ]
+                                                              },
+                                                   "graphql":  {
+                                                                   "enabled":  true,
+                                                                   "type":  {
+                                                                                "singular":  "venda_diaria_chokdist",
+                                                                                "plural":  "venda_diaria_chokdists"
+                                                                            }
+                                                               },
+                                                   "rest":  {
+                                                                "enabled":  true
+                                                            },
+                                                   "permissions":  [
+                                                                       {
+                                                                           "role":  "anonymous",
+                                                                           "actions":  [
+                                                                                           {
+                                                                                               "action":  "read"
+                                                                                           }
+                                                                                       ]
+                                                                       }
+                                                                   ]
+                                               }
                  }
 }
