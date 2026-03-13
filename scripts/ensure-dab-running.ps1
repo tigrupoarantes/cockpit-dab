@@ -77,7 +77,7 @@ function New-DbConnectionString {
     [string]$TrustServerCertificate = 'True'
   )
 
-  $base = "Server=$Server;Database=$Database;Encrypt=True;TrustServerCertificate=$TrustServerCertificate;"
+  $base = "Server=$Server;Database=$Database;Encrypt=True;TrustServerCertificate=$TrustServerCertificate;Command Timeout=120;"
   if ($Auth -eq 'Sql') {
     if (-not $Username) { throw 'Username obrigatorio para Auth=Sql.' }
     if (-not $Password) { throw 'Password obrigatorio para Auth=Sql.' }
