@@ -11,7 +11,7 @@
                     "pagination":  {
                                        "default-page-size":  100,
                                        "max-page-size":  100000,
-                                       "next-link-relative":  true
+                                       "next-link-relative":  false
                                    },
                     "rest":  {
                                  "enabled":  true,
@@ -366,6 +366,32 @@
                                                         }
                                                     ]
                                 },
+                     "verbas_ga360":  {
+                                         "source":  {
+                                                        "object":  "dbo.vw_verbas_long_api",
+                                                        "type":  "view",
+                                                        "key-fields":  [
+                                                                           "id_verba_long"
+                                                                       ]
+                                                    },
+                                         "graphql":  {
+                                                         "enabled":  false
+                                                     },
+                                         "rest":  {
+                                                      "enabled":  true,
+                                                      "path":  "verbas-ga360"
+                                                  },
+                                         "permissions":  [
+                                                             {
+                                                                 "role":  "anonymous",
+                                                                 "actions":  [
+                                                                                 {
+                                                                                     "action":  "read"
+                                                                                 }
+                                                                             ]
+                                                             }
+                                                         ]
+                                     },
                      "venda_diaria_chokdist":  {
                                                    "source":  {
                                                                   "object":  "gold.vw_venda_diaria_chokdist",

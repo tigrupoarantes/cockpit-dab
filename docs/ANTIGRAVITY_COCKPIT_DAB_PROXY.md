@@ -147,6 +147,9 @@ Allowlist recomendada (alinhada ao DAB config atual):
 - `stock_position`
 - `produtos`
 - `sales_product_detail`
+- `verbas`
+- `verbas-ga360`
+- `venda_diaria_chokdist`
 
 Importante:
 - Remover `vw_produtos_api` da allowlist (não é entidade).

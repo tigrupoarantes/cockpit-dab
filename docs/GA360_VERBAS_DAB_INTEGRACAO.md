@@ -1,10 +1,161 @@
-# GA360 x DAB — Integração do endpoint `verbas`
+# GA360 x DAB — Integração de Verbas
 
 ## Objetivo
 
-Documentar, de forma operacional, como o GA360 deve consultar o endpoint `verbas` no Data API Builder (DAB), evitando o erro:
+Documentar, de forma operacional, como o GA360 deve consultar os endpoints de verbas no Data API Builder (DAB).
 
-`Support for url template with implicit primary key field names is not yet added.`
+> **Atualização 2026-03-18:** Novo endpoint `verbas-ga360` (formato LONG) criado para resolver os 7 problemas de integração (P1–P7) documentados no PRD. O endpoint `verbas` (formato PIVOT) continua disponível como legado.
+
+---
+
+## Endpoints disponíveis
+
+| Endpoint | View | Formato | Uso |
+|----------|------|---------|-----|
+| `GET /v1/verbas-ga360` | `dbo.vw_verbas_long_api` | **LONG** (1 linha por cpf×mês×evento) | **GA360 — usar este** |
+| `GET /v1/verbas` | `dbo.vw_verbas_api` | PIVOT (12 colunas mensais) | Legado / outros consumidores |
+
+---
+
+## NOVO: Endpoint `verbas-ga360` (formato LONG)
+
+### Contrato de campos (alinhado com PRD seção 5)
+
+| Campo | Tipo | Obrigatório | Exemplo | Descrição |
+|-------|------|:-----------:|---------|-----------|
+| `id_verba_long` | varchar(64) | PK | `A1B2C3...` | Hash SHA2_256 (cnpj\|cpf\|ano\|mes\|cod_evento) |
+| `cpf` | varchar(11) | ✅ | `"12345678901"` | CPF do funcionário, apenas dígitos |
+| `nome_funcionario` | varchar(60) | ✅ | `"JOAO DA SILVA"` | Nome completo |
+| `cnpj_empresa` | varchar(14) | ✅ | `"53113791000122"` | CNPJ da empresa, 14 dígitos |
+| `razao_social` | varchar(40) | ✅ | `"CHOK DISTRIBUIDORA..."` | Razão social da empresa |
+| `tenant_id` | computed | ✅ | `"CHOK_DISTRIBUIDORA_DE_ALIMENTOS_LTDA"` | Razão social normalizada |
+| `ano` | smallint | ✅ | `2026` | Ano de referência |
+| `mes` | tinyint | ✅ | `3` | Mês de referência (1–12) |
+| `cod_evento` | int | ✅ | `1` | Código da rubrica/evento salarial |
+| `nome_evento` | varchar(100) | ✅ | `"SALARIO MENSAL"` | Descrição do evento |
+| `valor` | decimal(18,2) | ✅ | `4500.00` | Valor monetário |
+| `tipo_verba` | computed | ✅ | `"SALDO_SALARIO"` | Categoria inferida do cod_evento |
+| `competencia` | computed | ✅ | `"2026-03"` | Período YYYY-MM |
+
+### Exemplo de response
+
+```json
+{
+  "value": [
+    {
+      "id_verba_long": "A1B2C3D4...",
+      "cpf": "12345678901",
+      "nome_funcionario": "JOAO CARLOS DA SILVA",
+      "cnpj_empresa": "53113791000122",
+      "razao_social": "CHOK DISTRIBUIDORA DE ALIMENTOS LTDA",
+      "tenant_id": "CHOK_DISTRIBUIDORA_DE_ALIMENTOS_LTDA",
+      "ano": 2026,
+      "mes": 3,
+      "cod_evento": 1,
+      "nome_evento": "SALARIO MENSAL",
+      "valor": 4500.00,
+      "tipo_verba": "SALDO_SALARIO",
+      "competencia": "2026-03"
+    }
+  ],
+  "nextLink": "https://api.grupoarantes.emp.br/v1/verbas-ga360?$filter=..."
+}
+```
+
+### Filtros obrigatórios
+
+> **CRÍTICO:** Sempre use `$filter=ano eq <ANO>` — sem ele, full scan → timeout.
+
+| Filtro | Obrigatoriedade | Impacto |
+|--------|----------------|---------|
+| `ano eq 2026` | **Obrigatório** | Reduz escopo para 1 ano |
+| `ano eq 2026 and mes eq 3` | Recomendado | Sync parcial por mês |
+| `tenant_id eq 'EMPRESA_X'` | Recomendado | Reduz para 1 empresa |
+
+### Exemplos de chamada
+
+**Sync completo de ano (padrão GA360):**
+
+```bash
+curl -i "https://api.grupoarantes.emp.br/v1/verbas-ga360?\$filter=ano%20eq%202026&\$first=5000" \
+  -H "X-API-Key: <API_KEY>" \
+  -H "Accept: application/json"
+```
+
+**Sync parcial por mês:**
+
+```bash
+curl -i "https://api.grupoarantes.emp.br/v1/verbas-ga360?\$filter=ano%20eq%202026%20and%20mes%20eq%203&\$first=5000" \
+  -H "X-API-Key: <API_KEY>" \
+  -H "Accept: application/json"
+```
+
+**Filtro por empresa:**
+
+```bash
+curl -i "https://api.grupoarantes.emp.br/v1/verbas-ga360?\$filter=ano%20eq%202026%20and%20tenant_id%20eq%20'CHOK_DISTRIBUIDORA_DE_ALIMENTOS_LTDA'&\$first=5000" \
+  -H "X-API-Key: <API_KEY>" \
+  -H "Accept: application/json"
+```
+
+### Pseudocódigo de sync (GA360)
+
+```ts
+async function syncVerbas(baseUrl: string, apiKey: string, ano: number, mes?: number, tenantId?: string, first = 5000) {
+  const headers = { 'X-API-Key': apiKey, 'Accept': 'application/json' };
+
+  let filter = `ano eq ${ano}`;
+  if (mes) filter += ` and mes eq ${mes}`;
+  if (tenantId) filter += ` and tenant_id eq '${tenantId}'`;
+
+  let url = `${baseUrl}/verbas-ga360?$filter=${encodeURIComponent(filter)}&$first=${first}`;
+
+  while (url) {
+    const res = await fetch(url, { headers });
+    if (!res.ok) throw new Error(`DAB ${res.status}: ${await res.text()}`);
+
+    const payload = await res.json();
+    const rows = payload.value ?? [];
+
+    // Cada row tem: cpf, cnpj_empresa, ano, mes, cod_evento, tipo_verba, valor
+    // GA360 pode agrupar por (cpf, tipo_verba, ano) e pivotar meses internamente
+    await persistToStaging(rows);
+
+    // nextLink agora é ABSOLUTO — usar diretamente
+    url = payload.nextLink || '';
+  }
+}
+```
+
+### Metas de performance
+
+| Cenário | Volume estimado | Meta |
+|---------|-----------------|------|
+| Sync ano + filtro `$first=5000` | ~50.000 registros | **< 15s** |
+| Sync mês específico | ~4.000 registros | **< 3s** |
+| Sync ano + tenant_id | ~25.000 registros | **< 5s** |
+
+### Problemas resolvidos (P1–P7)
+
+| # | Problema | Status | Como |
+|---|---------|--------|------|
+| P1 | Full scan sem índice | ✅ Resolvido | View LONG lê de `gold.vw_pagamento_verba_sankhya` (já filtrado por dim_calendario) |
+| P2 | Filtro ano lento | ✅ Resolvido | Novos índices em dim_funcionario e dim_empresa |
+| P3 | nextLink relativo | ✅ Resolvido | `next-link-relative: false` no dab-config.json |
+| P4 | Página limitada | ✅ Resolvido | `max-page-size: 100000` — usar `$first=5000` |
+| P5 | Falta cnpj_empresa | ✅ Resolvido | JOIN com `silver.dim_empresa` na view |
+| P6 | Falta tipo_verba | ✅ Resolvido | CASE expression sobre cod_evento na view |
+| P7 | Nomes inconsistentes | ✅ Resolvido | Nomes padronizados conforme PRD seção 5 |
+
+---
+
+## LEGADO: Endpoint `verbas` (formato PIVOT)
+
+> Este endpoint continua disponível mas **não é recomendado para o GA360**. Use `verbas-ga360` acima.
+
+### Causa raiz do erro original no GA360
+
+O cliente estava chamando rota de item no formato **chave implícita**: `GET /v1/verbas/{valor}`. No DAB, esse formato retorna 400 com `implicit primary key`.
 
 ---
 
@@ -297,8 +448,11 @@ async function getVerbaById(baseUrl: string, apiKey: string, idVerba: string) {
 
 ## Observações finais
 
-- O backend DAB está operacional.
-- O erro apontado pelo GA360 é **de formato de URL na integração**, não de indisponibilidade do serviço.
-- Com a mudança de rota para chave explícita e uso de coleção paginada com filtro de `ano`, a sincronização deve ocorrer normalmente.
-- Coluna `tenant_id` adicionada na view para facilitar filtragem por empresa sem expor `razao_social` diretamente como chave de filtro.
-- Para diagnosticar performance: executar `scripts\_test_verbas.ps1` e `scripts\_update_stats_verbas.ps1`.
+- O backend DAB está operacional com dois endpoints de verbas: `verbas-ga360` (LONG, recomendado) e `verbas` (PIVOT, legado).
+- `nextLink` agora retorna URL **absoluta** em todos os endpoints.
+- `cnpj_empresa` disponível no endpoint LONG para match direto com tabela `companies` do GA360.
+- `tipo_verba` mapeado automaticamente via `cod_evento` — novos eventos não mapeados caem em `OUTROS`.
+- Para diagnosticar performance:
+  - Endpoint LONG: `scripts\_test_verbas_ga360.ps1` e `scripts\_dba_verbas_long_optimize.ps1`
+  - Endpoint PIVOT (legado): `scripts\_test_verbas.ps1` e `scripts\_dba_verbas_optimize.ps1`
+- Configuração no GA360: atualizar `dl_queries` para apontar para `/v1/verbas-ga360` (ou `/api/verbas-ga360` se upstream direto).
