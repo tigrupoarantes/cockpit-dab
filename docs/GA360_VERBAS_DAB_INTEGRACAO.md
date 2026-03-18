@@ -98,45 +98,142 @@ curl -i "https://api.grupoarantes.emp.br/v1/verbas-ga360?\$filter=ano%20eq%20202
   -H "Accept: application/json"
 ```
 
-### Pseudocódigo de sync (GA360)
+### Volumes reais medidos (2026-03-18)
+
+| Ano | Registros totais | CPFs distintos | Empresas | Páginas ($first=5000) | Tempo total |
+|-----|-----------------|----------------|----------|-----------------------|-------------|
+| **2025** | 214.801 | 732 | 11 | 43 | ~108s |
+| **2026** | 39.789 | 792 | 11 | 8 | ~8s |
+
+> **ATENÇÃO:** Com `$first=5000`, uma página retorna apenas ~700 CPFs. Para obter **todos os 732-792 CPFs**, é **obrigatório** seguir o `nextLink` até que ele não exista mais. Se o GA360 parar na primeira página, verá apenas ~700 funcionários.
+
+### Pseudocódigo de sync COMPLETO (GA360)
+
+> **CRÍTICO:** O loop `while (nextLink)` é obrigatório. Sem ele, o sync traz dados incompletos (ex: 224 de 792 funcionários).
 
 ```ts
-async function syncVerbas(baseUrl: string, apiKey: string, ano: number, mes?: number, tenantId?: string, first = 5000) {
+/**
+ * Sync completo de verbas do DAB para o GA360.
+ *
+ * Fluxo:
+ *   1. GET /v1/verbas-ga360?$filter=ano eq N&$first=5000
+ *   2. Processar payload.value (array de registros formato LONG)
+ *   3. Se payload.nextLink existir → resolver URL e repetir
+ *   4. Repetir até nextLink ser null/undefined
+ *
+ * IMPORTANTE:
+ *   - nextLink é RELATIVO (ex: /api/verbas-ga360?$filter=...&$after=TOKEN&$first=5000)
+ *   - Resolver para URL absoluta: new URL(nextLink, baseUrl)
+ *   - Para 2025: 43 páginas, ~214k registros, ~108s
+ *   - Para 2026: 8 páginas, ~40k registros, ~8s
+ */
+async function syncVerbas(
+  baseUrl: string,    // "https://api.grupoarantes.emp.br/v1" (produção) ou "http://localhost:5000/api" (local)
+  apiKey: string,
+  ano: number,
+  mes?: number,
+  tenantId?: string,
+  first = 5000
+) {
   const headers = { 'X-API-Key': apiKey, 'Accept': 'application/json' };
 
+  // Montar filtro OData — ano é OBRIGATÓRIO
   let filter = `ano eq ${ano}`;
   if (mes) filter += ` and mes eq ${mes}`;
   if (tenantId) filter += ` and tenant_id eq '${tenantId}'`;
 
-  let url = `${baseUrl}/verbas-ga360?$filter=${encodeURIComponent(filter)}&$first=${first}`;
+  let url: string | null = `${baseUrl}/verbas-ga360?$filter=${encodeURIComponent(filter)}&$first=${first}`;
 
+  let page = 0;
+  let totalRecords = 0;
+  const cpfsSeen = new Set<string>();
+
+  // === LOOP DE PAGINAÇÃO (OBRIGATÓRIO) ===
   while (url) {
+    page++;
     const res = await fetch(url, { headers });
-    if (!res.ok) throw new Error(`DAB ${res.status}: ${await res.text()}`);
+
+    if (res.status === 401) {
+      throw new Error('DAB Unauthorized: valide X-API-Key');
+    }
+    if (!res.ok) {
+      throw new Error(`DAB ${res.status}: ${await res.text()}`);
+    }
 
     const payload = await res.json();
-    const rows = payload.value ?? [];
+    const rows: VerbaRecord[] = payload.value ?? [];
 
-    // Cada row tem: cpf, cnpj_empresa, ano, mes, cod_evento, tipo_verba, valor
-    // GA360 pode agrupar por (cpf, tipo_verba, ano) e pivotar meses internamente
+    totalRecords += rows.length;
+    for (const r of rows) {
+      cpfsSeen.add(r.cpf);
+    }
+
+    console.log(`Página ${page}: ${rows.length} registros (acumulado: ${totalRecords}, CPFs: ${cpfsSeen.size})`);
+
+    // Cada row tem: cpf, cnpj_empresa, nome_funcionario, ano, mes,
+    //               cod_evento, nome_evento, tipo_verba, valor, competencia
     await persistToStaging(rows);
 
-    // nextLink é RELATIVO (ex: /api/verbas-ga360?$after=...&$first=5000)
-    // Resolver para URL absoluta usando o baseUrl
-    url = payload.nextLink
-      ? new URL(payload.nextLink, baseUrl).toString()
-      : '';
+    // === RESOLUÇÃO DO nextLink ===
+    // nextLink é RELATIVO: "/api/verbas-ga360?$filter=...&$after=TOKEN&$first=5000"
+    // Deve ser resolvido para URL absoluta usando o host base
+    if (payload.nextLink) {
+      // Extrair host base do baseUrl (ex: "https://api.grupoarantes.emp.br")
+      const baseOrigin = new URL(baseUrl).origin;
+      url = new URL(payload.nextLink, baseOrigin).toString();
+    } else {
+      url = null;  // Sem mais páginas — sync completo
+    }
   }
+
+  console.log(`Sync finalizado: ${totalRecords} registros, ${cpfsSeen.size} CPFs em ${page} páginas`);
 }
+
+// Tipagem do registro retornado pela API
+interface VerbaRecord {
+  id_verba_long: string;
+  cpf: string;
+  nome_funcionario: string;
+  cnpj_empresa: string;
+  razao_social: string;
+  tenant_id: string;
+  ano: number;
+  mes: number;
+  cod_evento: number;
+  nome_evento: string;
+  valor: number;
+  tipo_verba: string;
+  competencia: string;
+}
+```
+
+### Exemplo de chamada completa (curl — simular sync)
+
+```bash
+# Página 1
+curl -s "https://api.grupoarantes.emp.br/v1/verbas-ga360?\$filter=ano%20eq%202026&\$first=5000" \
+  -H "X-API-Key: <API_KEY>" -o page1.json
+
+# Extrair nextLink (relativo) e montar próxima URL
+NEXT=$(jq -r '.nextLink // empty' page1.json)
+# NEXT será algo como: /api/verbas-ga360?$filter=ano%20eq%202026&$first=5000&$after=TOKEN...
+
+# Página 2 (resolver relativo → absoluto)
+# Em produção o IIS mapeia /v1 → /api, então trocar /api por /v1:
+curl -s "https://api.grupoarantes.emp.br${NEXT/\/api\//\/v1\/}" \
+  -H "X-API-Key: <API_KEY>" -o page2.json
+
+# Repetir até nextLink ser null
 ```
 
 ### Metas de performance
 
-| Cenário | Volume estimado | Meta |
-|---------|-----------------|------|
-| Sync ano + filtro `$first=5000` | ~50.000 registros | **< 15s** |
-| Sync mês específico | ~4.000 registros | **< 3s** |
-| Sync ano + tenant_id | ~25.000 registros | **< 5s** |
+| Cenário | Volume | Páginas | Meta |
+|---------|--------|---------|------|
+| Sync ano 2026 completo (`$first=5000`) | ~40k registros, 792 CPFs | 8 | **< 15s** |
+| Sync ano 2025 completo (`$first=5000`) | ~215k registros, 732 CPFs | 43 | **< 120s** |
+| Sync mês específico | ~4.000 registros | 1 | **< 3s** |
+| Sync ano + tenant_id | ~20k registros | 4 | **< 5s** |
 
 ### Problemas resolvidos (P1–P7)
 
