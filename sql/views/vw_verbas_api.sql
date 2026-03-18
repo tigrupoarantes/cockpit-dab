@@ -8,6 +8,7 @@ SELECT
     ISNULL(CAST(src.tipo_verba AS nvarchar(4000)), N''), N'|',
     ISNULL(CAST(src.ano AS nvarchar(30)), N'')
   )), 2) AS id_verba,
+  UPPER(REPLACE(src.razao_social, ' ', '_')) AS tenant_id,
   src.razao_social,
   src.cpf,
   src.nome_funcionario,
@@ -22,7 +23,7 @@ SELECT
   src.Julho,
   src.Agosto,
   src.Setembro,
-  src.Outrubro,
+  src.Outubro,
   src.Novembro,
   src.Dezembro
 FROM gold.vw_pagamento_verba_pivot_mensal AS src;

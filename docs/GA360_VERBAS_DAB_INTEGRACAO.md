@@ -103,14 +103,40 @@ Configuração atual do DAB:
 Campos observados na resposta:
 
 - `id_verba` (chave técnica para rota de item)
+- `tenant_id` (empresa em formato `RAZAO_SOCIAL_NORMALIZADA` — use para filtrar por empresa)
 - `razao_social`
 - `cpf`
 - `nome_funcionario`
 - `tipo_verba`
 - `ano`
-- colunas mensais (ex.: `Janeiro`, `Fevereiro`, `Marco`, `Abril`, ...)
+- colunas mensais: `Janeiro`, `Fevereiro`, `Marco`, `Abril`, `Maio`, `Junho`, `Julho`, `Agosto`, `Setembro`, `Outubro`, `Novembro`, `Dezembro`
 
 > Observação: usar `id_verba` apenas como identificador técnico de API. Não inferir regra de negócio a partir do hash.
+
+---
+
+## Filtros obrigatórios e recomendados
+
+> **IMPORTANTE — Performance:** sem filtro de `ano`, o endpoint faz full scan em toda a tabela de verbas (lento, pode ultrapassar 30s). Sempre use `$filter=ano eq <ANO>` como mínimo.
+
+| Filtro | Obrigatoriedade | Impacto |
+|--------|----------------|---------|
+| `ano eq 2025` | **Obrigatório** | Reduz escopo para 1 ano, usa índice no dim_calendario |
+| `tenant_id eq 'EMPRESA_X'` | Recomendado | Reduz para 1 empresa, evita dados cross-tenant |
+
+### Valores válidos de `tenant_id` (validados em 2026-03-16)
+
+| tenant_id | razao_social |
+|-----------|-------------|
+| `CHOK_DISTRIBUIDORA_DE_ALIMENTOS_LTDA` | CHOK DISTRIBUIDORA DE ALIMENTOS LTDA |
+| `CHOKDOCE_COMERCIO_DE_PRODUTOS_ALIM_LTDA` | CHOKDOCE COMERCIO DE PRODUTOS ALIM LTDA |
+
+### Como descobrir os valores válidos de `tenant_id`
+
+```bash
+curl -s "https://api.grupoarantes.emp.br/v1/verbas?$first=100&$select=tenant_id,razao_social" \
+  -H "X-API-Key: <API_KEY>" | jq '[.value[] | {tenant_id, razao_social}] | unique'
+```
 
 ---
 
@@ -124,15 +150,23 @@ curl -i "https://api.grupoarantes.emp.br/v1/health" \
   -H "Accept: application/json"
 ```
 
-## 2) Listar verbas paginado
+## 2) Listar verbas com filtro de ano (RECOMENDADO)
 
 ```bash
-curl -i "https://api.grupoarantes.emp.br/v1/verbas?$first=200" \
+curl -i "https://api.grupoarantes.emp.br/v1/verbas?\$filter=ano%20eq%202025&\$first=1000" \
   -H "X-API-Key: <API_KEY>" \
   -H "Accept: application/json"
 ```
 
-## 3) Buscar item por chave explícita
+## 3) Listar verbas com ano + empresa (IDEAL para multi-tenant)
+
+```bash
+curl -i "https://api.grupoarantes.emp.br/v1/verbas?\$filter=ano%20eq%202026%20and%20tenant_id%20eq%20'CHOK_DISTRIBUIDORA_DE_ALIMENTOS_LTDA'&\$first=1000" \
+  -H "X-API-Key: <API_KEY>" \
+  -H "Accept: application/json"
+```
+
+## 4) Buscar item por chave explícita
 
 ```bash
 curl -i "https://api.grupoarantes.emp.br/v1/verbas/id_verba/<ID_VERBA>" \
@@ -148,7 +182,7 @@ curl -i "https://api.grupoarantes.emp.br/v1/verbas/id_verba/<ID_VERBA>" \
 
 ### Fluxo para sincronização (coleção)
 
-1. Tentar `GET /v1/verbas?$first=<N>`
+1. Tentar `GET /v1/verbas?$filter=ano eq <ANO>&$first=<N>` — **sempre com filtro de ano**
 2. Se 200, processar `value` e seguir `nextLink`
 3. Se 401, tratar autenticação/chave
 4. Se 5xx, aplicar retry exponencial
@@ -161,13 +195,19 @@ curl -i "https://api.grupoarantes.emp.br/v1/verbas/id_verba/<ID_VERBA>" \
 ## Pseudocódigo resiliente
 
 ```ts
-async function syncVerbas(baseUrl: string, apiKey: string, first = 500) {
+async function syncVerbas(baseUrl: string, apiKey: string, ano: number, tenantId?: string, first = 1000) {
   const headers = {
     'X-API-Key': apiKey,
     'Accept': 'application/json'
   };
 
-  let url = `${baseUrl}/verbas?$first=${first}`;
+  // Filtro de ano é OBRIGATÓRIO — sem ele a query faz full scan (lento)
+  let filter = `ano eq ${ano}`;
+  if (tenantId) {
+    filter += ` and tenant_id eq '${tenantId}'`;
+  }
+
+  let url = `${baseUrl}/verbas?$filter=${encodeURIComponent(filter)}&$first=${first}`;
 
   while (url) {
     const res = await fetch(url, { headers });
@@ -246,10 +286,11 @@ async function getVerbaById(baseUrl: string, apiKey: string, idVerba: string) {
 ## Checklist de homologação GA360
 
 - [ ] `GET /v1/health` com `X-API-Key` retorna 200
-- [ ] `GET /v1/verbas?$first=1` retorna 200 e campo `value`
-- [ ] `id_verba` presente nos itens retornados
+- [ ] `GET /v1/verbas?$filter=ano eq 2025&$first=1` retorna 200 em < 5s
+- [ ] `id_verba` e `tenant_id` presentes nos itens retornados
 - [ ] `GET /v1/verbas/id_verba/{id}` retorna 200 para id válido
 - [ ] Nenhuma chamada usando `/v1/verbas/{id}`
+- [ ] Todas as chamadas de sync usam `$filter=ano eq <ANO>` (nunca full scan)
 - [ ] Retry implementado para 5xx
 
 ---
@@ -258,4 +299,6 @@ async function getVerbaById(baseUrl: string, apiKey: string, idVerba: string) {
 
 - O backend DAB está operacional.
 - O erro apontado pelo GA360 é **de formato de URL na integração**, não de indisponibilidade do serviço.
-- Com a mudança de rota para chave explícita e uso de coleção paginada, a sincronização deve ocorrer normalmente.
+- Com a mudança de rota para chave explícita e uso de coleção paginada com filtro de `ano`, a sincronização deve ocorrer normalmente.
+- Coluna `tenant_id` adicionada na view para facilitar filtragem por empresa sem expor `razao_social` diretamente como chave de filtro.
+- Para diagnosticar performance: executar `scripts\_test_verbas.ps1` e `scripts\_update_stats_verbas.ps1`.

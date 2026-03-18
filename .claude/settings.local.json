@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 -c \":*)",
+      "Bash(where python:*)",
+      "Bash(where python3:*)",
+      "Bash(where py:*)",
+      "Bash(where pandoc:*)",
+      "Bash(where powershell:*)",
+      "Bash(powershell -NoProfile:*)",
+      "Bash(curl -s \"http://localhost:5000/api/\")",
+      "Bash(curl -s \"http://localhost:5000/api/sales_daily?$top=2\" -w \"\\\\nHTTP:%{http_code}\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5000/api/health)"
+    ]
+  }
+}
