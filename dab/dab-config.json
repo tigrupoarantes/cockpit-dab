@@ -11,7 +11,7 @@
                     "pagination":  {
                                        "default-page-size":  100,
                                        "max-page-size":  100000,
-                                       "next-link-relative":  false
+                                       "next-link-relative":  true
                                    },
                     "rest":  {
                                  "enabled":  true,

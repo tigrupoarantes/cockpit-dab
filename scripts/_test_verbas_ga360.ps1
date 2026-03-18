@@ -43,11 +43,8 @@ function Invoke-DabRequest {
         if ($json.nextLink) {
             Write-Host "nextLink : SIM"
             if ($ValidarNextLink) {
-                if ($json.nextLink -match "^https?://") {
-                    Write-Host "  [OK] nextLink e ABSOLUTO: $($json.nextLink.Substring(0, [math]::Min(80, $json.nextLink.Length)))..."
-                } else {
-                    Write-Host "  [FALHA] nextLink e RELATIVO (P3 nao resolvido): $($json.nextLink.Substring(0, [math]::Min(80, $json.nextLink.Length)))..."
-                }
+                Write-Host "  nextLink: $($json.nextLink.Substring(0, [math]::Min(100, $json.nextLink.Length)))..."
+                Write-Host "  NOTA: nextLink e RELATIVO — GA360 deve resolver para URL absoluta usando baseUrl"
             }
         } else {
             Write-Host "nextLink : NAO"

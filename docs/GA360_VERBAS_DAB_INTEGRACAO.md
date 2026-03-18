@@ -121,8 +121,11 @@ async function syncVerbas(baseUrl: string, apiKey: string, ano: number, mes?: nu
     // GA360 pode agrupar por (cpf, tipo_verba, ano) e pivotar meses internamente
     await persistToStaging(rows);
 
-    // nextLink agora é ABSOLUTO — usar diretamente
-    url = payload.nextLink || '';
+    // nextLink é RELATIVO (ex: /api/verbas-ga360?$after=...&$first=5000)
+    // Resolver para URL absoluta usando o baseUrl
+    url = payload.nextLink
+      ? new URL(payload.nextLink, baseUrl).toString()
+      : '';
   }
 }
 ```
@@ -139,9 +142,9 @@ async function syncVerbas(baseUrl: string, apiKey: string, ano: number, mes?: nu
 
 | # | Problema | Status | Como |
 |---|---------|--------|------|
-| P1 | Full scan sem índice | ✅ Resolvido | View LONG lê de `gold.vw_pagamento_verba_sankhya` (já filtrado por dim_calendario) |
+| P1 | Full scan sem índice | ✅ Resolvido | View LONG lê da fact table `silver.fact_pagamento_verba_sankhya` com JOINs nas dimensões |
 | P2 | Filtro ano lento | ✅ Resolvido | Novos índices em dim_funcionario e dim_empresa |
-| P3 | nextLink relativo | ✅ Resolvido | `next-link-relative: false` no dab-config.json |
+| P3 | nextLink relativo | ✅ Resolvido | nextLink é relativo — GA360 Edge Function deve resolver para URL absoluta usando `new URL(nextLink, baseUrl)` (ver pseudocódigo acima e `ANTIGRAVITY_COCKPIT_DAB_PROXY.md` seção 5) |
 | P4 | Página limitada | ✅ Resolvido | `max-page-size: 100000` — usar `$first=5000` |
 | P5 | Falta cnpj_empresa | ✅ Resolvido | JOIN com `silver.dim_empresa` na view |
 | P6 | Falta tipo_verba | ✅ Resolvido | CASE expression sobre cod_evento na view |
