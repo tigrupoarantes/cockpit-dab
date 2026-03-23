@@ -392,6 +392,32 @@
                                                              }
                                                          ]
                                      },
+                     "venda_diaria_chokdist_lite":  {
+                                                   "source":  {
+                                                                  "object":  "gold.vw_venda_diaria_chokdist_lite",
+                                                                  "type":  "view",
+                                                                  "key-fields":  [
+                                                                                     "numero_pedido",
+                                                                                     "sku"
+                                                                                 ]
+                                                              },
+                                                   "graphql":  {
+                                                                   "enabled":  false
+                                                               },
+                                                   "rest":  {
+                                                                "enabled":  true
+                                                            },
+                                                   "permissions":  [
+                                                                       {
+                                                                           "role":  "anonymous",
+                                                                           "actions":  [
+                                                                                           {
+                                                                                               "action":  "read"
+                                                                                           }
+                                                                                       ]
+                                                                       }
+                                                                   ]
+                                               },
                      "venda_diaria_chokdist":  {
                                                    "source":  {
                                                                   "object":  "gold.vw_venda_diaria_chokdist",

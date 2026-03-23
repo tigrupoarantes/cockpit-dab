@@ -6,7 +6,7 @@ Voce e o especialista cross-project responsavel pela ponte entre o **cockpit-dab
 
 **cockpit-dab** (`c:\Github\cockpit-dab`):
 - Data API Builder v1.6.87 + SQL Server 2017 + IIS
-- 13 endpoints REST read-only com OData
+- 17 endpoints REST read-only com OData
 - Config: `dab/dab-config.json`
 - Views: `sql/views/`
 - URL producao: `https://api.grupoarantes.emp.br/v1`
@@ -14,13 +14,16 @@ Voce e o especialista cross-project responsavel pela ponte entre o **cockpit-dab
 **cockpit-mcp-server** (`c:\Github\cockpit-mcp-server`):
 - MCP Server TypeScript no Vercel (serverless, timeout 30s)
 - Consome DAB via `lib/dab.ts` (HTTP client com paginacao automatica)
-- 6 tools definidas em `lib/tools.ts`:
-  - `get_sales_daily` → `vw_sales_daily`
-  - `get_venda_prod` → `vw_venda_prod`
-  - `get_sales_by_sku` → `vw_sales_by_sku`
-  - `get_sales_product_detail` → `vw_sales_product_detail_api`
+- 9 tools definidas em `lib/tools.ts`:
+  - `get_sales_daily` → `vw_sales_daily` (multi-tenant)
+  - `get_venda_prod` → `vw_venda_prod` (multi-tenant)
+  - `get_sales_by_sku` → `vw_sales_by_sku` (multi-tenant)
+  - `get_sales_product_detail` → `vw_sales_product_detail_api` (multi-tenant)
   - `get_verbas_ga360` → `vw_verbas_long_api` (filtro ano obrigatorio)
-  - `get_venda_diaria_chokdist` → `gold.vw_venda_diaria_chokdist` (filtro data obrigatorio)
+  - `get_venda_diaria_chokdist` → `gold.vw_venda_diaria_chokdist` (60 cols, filtro data)
+  - `get_venda_diaria_chokdist_lite` → `gold.vw_venda_diaria_chokdist_lite` (47 cols, rapido)
+  - `get_companies` → `vw_companies` (lista tenants)
+  - `get_funcionarios` → `vw_funcionarios` (busca por nome/empresa)
 - BFF: `api/chat.ts` (Claude tool-calling loop, max 5 rounds)
 - MCP: `api/mcp.ts` (Streamable HTTP, stateless, Bearer auth)
 - Dependencias: `@anthropic-ai/sdk`, `@modelcontextprotocol/sdk`
@@ -115,11 +118,9 @@ Ao responder perguntas ou executar tarefas, aja como especialista em:
 
 | DAB Endpoint | View | Candidato a Tool? |
 |-------------|------|-------------------|
-| `/v1/companies` | `vw_companies` | Sim — util para listar tenants |
 | `/v1/coverage_city` | `vw_coverage_city` | Sim — analise geografica |
 | `/v1/stock_position` | `vw_stock_position` | Sim — estoque |
 | `/v1/produtos` | `vw_produtos_api` | Sim — catalogo |
-| `/v1/funcionarios` | `vw_funcionarios` | Cuidado — dados PII/LGPD |
 | `/v1/verbas` | `vw_verbas_api` | Coberto por verbas_ga360 (LONG) |
 | `/v1/health` | `vw_health` | Nao — operacional, nao analitico |
 
