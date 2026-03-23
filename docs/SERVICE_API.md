@@ -145,32 +145,30 @@ Retorno esperado (exemplo):
 }
 ```
 
-### Vendas
-- `GET /sales_daily`
-- `GET /sales_by_sku`
-- `GET /venda_prod`
+### Vendas (multi-tenant via `tenant_id`)
+- `GET /sales_daily` — vendas diárias agregadas por tenant
+- `GET /sales_by_sku` — vendas por SKU/produto por tenant
+- `GET /sales_product_detail` — detalhe de linhas de venda (16 colunas, PII-safe)
+- `GET /venda_prod` — pedidos por produto (legacy, 56 colunas)
 
-Status atual:
-- `venda_prod`: retorna dados (view `dbo.vw_venda_prod` → wrapper da canônica `dbo.vw_sales_product_detail`).
-- `sales_daily` e `sales_by_sku`: retornam dados.
+Todos suportam filtro `$filter=tenant_id eq '<code>'` para isolar por empresa.
+
+### Vendas Chok Distribuidora (detalhe operacional)
+- `GET /venda_diaria_chokdist` — 60 colunas incluindo checkin e ação não-venda. **OBRIGATÓRIO**: `$filter=data eq '<YYYY-MM-DD>'`
+- `GET /venda_diaria_chokdist_lite` — 47 colunas (sem CTEs caros de checkin). Mais rápido. **OBRIGATÓRIO**: filtro de data.
+
+### Verbas / Comissões
+- `GET /verbas` — formato PIVOT (12 colunas mensais). **OBRIGATÓRIO**: `$filter=ano eq <ANO>`
+- `GET /verbas-ga360` — formato LONG (1 linha por CPF × mês × evento). **OBRIGATÓRIO**: `$filter=ano eq <ANO>`
 
 ### Cobertura
-- `GET /coverage_city`
-
-Status atual:
-- `coverage_city`: retorna dados.
+- `GET /coverage_city` — positivação por cidade
 
 ### Estoque
-- `GET /stock_position`
-
-Status atual:
-- `stock_position`: retorna dados.
+- `GET /stock_position` — posição de estoque por tenant × SKU
 
 ### Produtos
-- `GET /produtos`
-
-Status atual:
-- `produtos`: retorna dados (entidade `produtos` no DAB aponta para a view `dbo.vw_produtos_api`).
+- `GET /produtos` — catálogo de produtos (view `dbo.vw_produtos_api`)
 
 ### Funcionários
 - `GET /funcionarios`
