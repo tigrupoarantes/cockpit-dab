@@ -154,8 +154,7 @@ Retorno esperado (exemplo):
 Todos suportam filtro `$filter=tenant_id eq '<code>'` para isolar por empresa.
 
 ### Vendas Chok Distribuidora (detalhe operacional)
-- `GET /venda_diaria_chokdist` — 60 colunas incluindo checkin e ação não-venda. **OBRIGATÓRIO**: `$filter=data eq '<YYYY-MM-DD>'`
-- `GET /venda_diaria_chokdist_lite` — 47 colunas (sem CTEs caros de checkin). Mais rápido. **OBRIGATÓRIO**: filtro de data.
+- `GET /venda_diaria_chokdist` — v2 otimizada com colunas calculadas (peso bruto, valor total, lead time). Sem CTEs caros. **OBRIGATÓRIO**: `$filter=data eq '<YYYY-MM-DD>'`
 
 ### Verbas / Comissões
 - `GET /verbas` — formato PIVOT (12 colunas mensais). **OBRIGATÓRIO**: `$filter=ano eq <ANO>`

@@ -1,4 +1,8 @@
--- View simplificada para visualização rápida enquanto UPDATE STATISTICS roda.
+-- ⚠️ DEPRECATED: substituída por gold.vw_venda_diaria_chokdist_v2
+-- A v2 incorpora as otimizações da _lite e adiciona colunas calculadas.
+-- Este arquivo é mantido apenas como referência histórica.
+--
+-- View simplificada original (removida do DAB):
 -- Remove os CTEs pesados (checkin 27.7M, acao_nv 39.8M) que causam timeout.
 -- Retorna os KPIs principais de vendas sem dados de check-in e ação não-venda.
 

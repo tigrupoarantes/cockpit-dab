@@ -365,7 +365,7 @@
                                      },
                      "venda_diaria_chokdist":  {
                                                    "source":  {
-                                                                  "object":  "gold.vw_venda_diaria_chokdist",
+                                                                  "object":  "gold.vw_venda_diaria_chokdist_v2",
                                                                   "type":  "view",
                                                                   "key-fields":  [
                                                                                      "numero_pedido",

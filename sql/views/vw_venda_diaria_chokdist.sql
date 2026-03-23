@@ -1,3 +1,7 @@
+-- ⚠️ DEPRECATED: substituída por gold.vw_venda_diaria_chokdist_v2
+-- A v2 remove CTEs caros (checkin 27.7M, acao_nv 39.8M) e adiciona colunas calculadas.
+-- DAB agora aponta para v2 em dab-config.json.
+-- Manter este arquivo apenas como referência histórica.
 CREATE OR ALTER VIEW gold.vw_venda_diaria_chokdist AS
 
 WITH evento_lib AS (

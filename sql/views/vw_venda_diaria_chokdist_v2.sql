@@ -1,0 +1,39 @@
+-- gold.vw_venda_diaria_chokdist_v2
+-- Criada pelo DBA em 2026-03-23
+-- Substitui v1 (vw_venda_diaria_chokdist) e _lite
+--
+-- Melhorias vs v1:
+--   - CTEs caros removidos: checkin (27.7M rows) e acao_nao_venda (39.8M rows)
+--   - Performance dramaticamente melhor (sem full scan em tabelas bronze pesadas)
+--   - Novas colunas calculadas: peso_bruto, pesos totais, valor_total_venda,
+--     valor_total_pedido, quantidade_unidade_venda, lead_time_entrega
+--   - Campo 'mes' numerico (substitui nome_mes)
+--   - Campo 'data' como DATE (era datetime)
+--
+-- Colunas (baseado na SP gold.sp_consulta_venda_diaria_chokdist):
+--   empresa, ano, mes, data, hora_cadastro,
+--   cnpj_cpf, cod_cliente, grupo_cliente, razao_social,
+--   endereco, bairro, municipio, cep, estado, cod_pais, email,
+--   segmento, latitude, longitude,
+--   origem_pedido, ean, sku, descricao_produto,
+--   categoria, familia, grupo, fabricante,
+--   peso_liq_unid, peso_bruto,
+--   codigo_promocao, descricao_promocao, unidade_venda,
+--   fator_pedido, qtde_vendida,
+--   custo_unitario_prod, preco_unitario_prod, preco_tabela_cadastro,
+--   valor_total_venda,
+--   cod_vendedor, nome_vendedor,
+--   cod_supervisor, nome_supervisor, nome_da_equipe,
+--   cod_gerente, nome_gerente, nome_gerencia,
+--   hora_inicio_checkin, hora_fim_checkout, duracao_checkin_minutos,
+--   data_liberacao_pedido, hora_liberacao_pedido,
+--   numero_pedido, tipo_pedido, situacao_pedido, nota_fiscal,
+--   prazo_venda_cliente, prazo_cadastro_cliente,
+--   data_entrega, hora_entrega
+--
+-- Chave composta: numero_pedido + sku
+-- Filtro obrigatorio: data (BETWEEN @Dt_Inicial AND @Dt_Final)
+--
+-- NOTA: O DDL completo (CREATE VIEW) esta no banco GA_DATALAKE.
+-- Este arquivo documenta a estrutura. Para o SQL real, consultar o DBA
+-- ou extrair via: EXEC sp_helptext 'gold.vw_venda_diaria_chokdist_v2'

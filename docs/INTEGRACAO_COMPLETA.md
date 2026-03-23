@@ -92,8 +92,7 @@ Views GOLD (como `venda_diaria_chokdist`) existem apenas para detalhe operaciona
 
 | Endpoint | View | Key Fields | Notas |
 |----------|------|------------|-------|
-| `/v1/venda_diaria_chokdist` | `gold.vw_venda_diaria_chokdist` | numero_pedido, sku | 60 cols, checkin/não-venda |
-| `/v1/venda_diaria_chokdist_lite` | `gold.vw_venda_diaria_chokdist_lite` | numero_pedido, sku | 47 cols, sem CTEs caros |
+| `/v1/venda_diaria_chokdist` | `gold.vw_venda_diaria_chokdist_v2` | numero_pedido, sku | v2 otimizada, colunas calculadas |
 
 ### Filtros obrigatórios (timeout sem eles)
 
@@ -113,8 +112,7 @@ Views GOLD (como `venda_diaria_chokdist`) existem apenas para detalhe operaciona
 | `get_sales_product_detail` | sales_product_detail | — |
 | `get_venda_prod` | venda_prod | — |
 | `get_verbas_ga360` | verbas-ga360 | `ano` (required) |
-| `get_venda_diaria_chokdist` | venda_diaria_chokdist | `data` (required) |
-| `get_venda_diaria_chokdist_lite` | venda_diaria_chokdist_lite | `data` (required) |
+| `get_venda_diaria_chokdist` | venda_diaria_chokdist (v2) | `data` (required) |
 | `get_companies` | companies | — |
 | `get_funcionarios` | funcionarios | — |
 
