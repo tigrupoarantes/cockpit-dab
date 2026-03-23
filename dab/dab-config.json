@@ -336,36 +336,7 @@
                                                                       }
                                                                   ]
                                               },
-                     "verbas":  {
-                                    "source":  {
-                                                   "object":  "dbo.vw_verbas_api",
-                                                   "type":  "view",
-                                                   "key-fields":  [
-                                                                      "id_verba"
-                                                                  ]
-                                               },
-                                    "graphql":  {
-                                                    "enabled":  true,
-                                                    "type":  {
-                                                                 "singular":  "verba",
-                                                                 "plural":  "verbas"
-                                                             }
-                                                },
-                                    "rest":  {
-                                                 "enabled":  true,
-                                                 "path":  "verbas"
-                                             },
-                                    "permissions":  [
-                                                        {
-                                                            "role":  "anonymous",
-                                                            "actions":  [
-                                                                            {
-                                                                                "action":  "read"
-                                                                            }
-                                                                        ]
-                                                        }
-                                                    ]
-                                },
+
                      "verbas_ga360":  {
                                          "source":  {
                                                         "object":  "dbo.vw_verbas_long_api",
@@ -392,32 +363,6 @@
                                                              }
                                                          ]
                                      },
-                     "venda_diaria_chokdist_lite":  {
-                                                   "source":  {
-                                                                  "object":  "gold.vw_venda_diaria_chokdist_lite",
-                                                                  "type":  "view",
-                                                                  "key-fields":  [
-                                                                                     "numero_pedido",
-                                                                                     "sku"
-                                                                                 ]
-                                                              },
-                                                   "graphql":  {
-                                                                   "enabled":  false
-                                                               },
-                                                   "rest":  {
-                                                                "enabled":  true
-                                                            },
-                                                   "permissions":  [
-                                                                       {
-                                                                           "role":  "anonymous",
-                                                                           "actions":  [
-                                                                                           {
-                                                                                               "action":  "read"
-                                                                                           }
-                                                                                       ]
-                                                                       }
-                                                                   ]
-                                               },
                      "venda_diaria_chokdist":  {
                                                    "source":  {
                                                                   "object":  "gold.vw_venda_diaria_chokdist",
