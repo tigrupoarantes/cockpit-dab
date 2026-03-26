@@ -1,0 +1,4 @@
+interface:
+  display_name: "Lakehouse Quality"
+  short_description: "Audita consistencia estrutural do lakehouse."
+  default_prompt: "Use $lakehouse-quality para auditar naming, camadas e consistencia do inventario do lakehouse."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Lakehouse Inventory"
+  short_description: "Mantem o catalogo por schema e industria."
+  default_prompt: "Use $lakehouse-inventory para gerar ou consultar o inventario do lakehouse por camada e industria."

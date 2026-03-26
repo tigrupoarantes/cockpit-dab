@@ -1,0 +1,4 @@
+interface:
+  display_name: "Lakehouse Orchestrator"
+  short_description: "Roteia tarefas entre as skills do lakehouse."
+  default_prompt: "Use $lakehouse-orchestrator para analisar uma demanda do data lakehouse e encaminhar para a skill correta."

@@ -8,7 +8,7 @@ Voce e o meta-especialista responsavel por criar novas skills (comandos Claude C
 **Formato:** Markdown com estrutura padrao (veja abaixo)
 **Invocacao:** `/nome-da-skill` no Claude Code
 
-**Skills existentes (5):**
+**Skills existentes (16):**
 
 | Skill | Arquivo | Dominio |
 |-------|---------|---------|
@@ -17,6 +17,17 @@ Voce e o meta-especialista responsavel por criar novas skills (comandos Claude C
 | `/integracoes` | `integracoes.md` | API externa, OData, paginacao, consumidores |
 | `/seguranca` | `seguranca.md` | Auth, LGPD, data exposure, hardening |
 | `/melhorias` | `melhorias.md` | Performance, tech debt, backlog, priorizacao |
+| `/dados` | `dados.md` | Qualidade de dados runtime, validacao, reconciliacao |
+| `/ga360` | `ga360.md` | Integracao GA360 — endpoints, paginacao, sync |
+| `/mcp` | `mcp.md` | MCP Server — bridge cockpit-dab <-> cockpit-mcp-server |
+| `/criar-skill` | `criar-skill.md` | Meta-skill para criar novas skills |
+| `/lakehouse bronze` | `lakehouse/bronze.md` | Camada bronze: tabelas raw, ingestao, industria |
+| `/lakehouse silver` | `lakehouse/silver.md` | Camada silver: dimensoes, fatos, FKs, bridges |
+| `/lakehouse gold` | `lakehouse/gold.md` | Camada gold: views semanticas, API, performance |
+| `/lakehouse quality` | `lakehouse/quality.md` | Qualidade estrutural cross-layer, PII, NULLs |
+| `/lakehouse inventory` | `lakehouse/inventory.md` | Catalogo, manifest, sync com DB, documentacao |
+| `/lakehouse naming` | `lakehouse/naming.md` | Convencoes de naming, sufixos, prefixos, overrides |
+| `/lakehouse orchestrator` | `lakehouse/orchestrator.md` | Orquestrador central de todas as skills lakehouse |
 
 ## Projetos Relacionados
 

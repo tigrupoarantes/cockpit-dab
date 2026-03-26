@@ -1,0 +1,4 @@
+interface:
+  display_name: "Lakehouse Naming"
+  short_description: "Valida nomes e classificacao por industria."
+  default_prompt: "Use $lakehouse-naming para validar o naming e a classificacao de objetos do lakehouse."

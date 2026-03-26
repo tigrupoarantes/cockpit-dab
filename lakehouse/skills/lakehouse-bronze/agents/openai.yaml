@@ -1,0 +1,4 @@
+interface:
+  display_name: "Lakehouse Bronze"
+  short_description: "Analisa ingestao e objetos raw da bronze."
+  default_prompt: "Use $lakehouse-bronze para revisar a camada bronze do lakehouse."

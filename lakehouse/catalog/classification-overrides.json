@@ -1,0 +1,21 @@
+{
+  "supported_industries": [
+    "chokdistribuidora",
+    "g4distribuidora"
+  ],
+  "industry_aliases": {
+    "g4_distribuidora": "g4distribuidora",
+    "g4dist": "g4distribuidora"
+  },
+  "overrides": {
+    "gold.vw_sales_daily": "shared",
+    "gold.vw_sales_by_sku": "shared",
+    "gold.vw_sales_product_detail": "shared",
+    "gold.vw_pagamento_verba_sankhya": "shared",
+    "gold.vw_pagamento_verba_pivot_mensal": "shared",
+    "gold.vw_venda_diaria_g4dist": "g4distribuidora",
+    "silver.fact_pagamento_verba_sankhya": "shared",
+    "bronze.pag_verba_mes_sankhya": "shared",
+    "bronze.empresa_acerto_sankhya": "shared"
+  }
+}

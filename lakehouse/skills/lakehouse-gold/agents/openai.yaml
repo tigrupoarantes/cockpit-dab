@@ -1,0 +1,4 @@
+interface:
+  display_name: "Lakehouse Gold"
+  short_description: "Analisa views e camada semantica da gold."
+  default_prompt: "Use $lakehouse-gold para revisar objetos analiticos e semanticos da camada gold."

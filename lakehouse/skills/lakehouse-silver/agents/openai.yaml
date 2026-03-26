@@ -1,0 +1,4 @@
+interface:
+  display_name: "Lakehouse Silver"
+  short_description: "Analisa dimensoes, fatos e integridade da silver."
+  default_prompt: "Use $lakehouse-silver para revisar a modelagem e integridade da camada silver."
