@@ -173,25 +173,26 @@ Todos suportam filtro `$filter=tenant_id eq '<code>'` para isolar por empresa.
 - `GET /funcionarios`
 
 Status atual:
-- `funcionarios`: retorna dados (entidade `funcionarios` no DAB aponta para a view `dbo.vw_funcionarios`).
+- `funcionarios`: retorna dados (entidade `funcionarios` no DAB aponta para a view `gold.vw_funcionario`).
 
 Campos:
+- Contrato validado localmente apos a troca para `gold.vw_funcionario`: `Situacao`, `CPF`, `Nome_Funcionario`, `Email`, `Sexo`, `Data_Nascimento`, `Idade`, `Data_Admissao`, `Data_Demissao`, `Primeiro_Emprego`, `Contabilizacao`, `Cargo`, `Categoria`, `Departamento`, `Funcao`, `Cod_Empresa`, `Nome_Fantasia`.
 - `id_funcionario`: chave técnica estável (SHA2_256)
-- `cpf`
-- `nome_funcionario`
-- `email`
-- `sexo` (MASCULINO/FEMININO/INDEFINIDO)
-- `data_nascimento`
-- `idade`
-- `data_admissao`
+- `CPF` (chave da entidade)
+- `Nome_Funcionario`
+- `Email`
+- `Sexo`
+- `Data_Nascimento`
+- `Idade`
+- `Data_Admissao`
 - `primeiro_emprego` (SIM/NÃO)
-- `contabilizacao`
-- `cargo`
-- `categoria`
-- `departamento`
-- `funcao`
-- `cod_empresa`
-- `nome_fantasia`
+- `Contabilizacao`
+- `Cargo`
+- `Categoria`
+- `Departamento`
+- `Funcao`
+- `Cod_Empresa`
+- `Nome_Fantasia`
 
 ### Empresas
 - `GET /companies`

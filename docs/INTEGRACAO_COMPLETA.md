@@ -84,7 +84,7 @@ Views GOLD (como `venda_diaria_chokdist`) existem apenas para detalhe operaciona
 | `/v1/coverage_city` | `dbo.vw_coverage_city` | tenant_id, dt_ref, ds_cidade |
 | `/v1/stock_position` | `dbo.vw_stock_position` | tenant_id, id_sku |
 | `/v1/produtos` | `dbo.vw_produtos_api` | id_dim_prod |
-| `/v1/funcionarios` | `dbo.vw_funcionarios` | id_funcionario |
+| `/v1/funcionarios` | `gold.vw_funcionario` | CPF |
 | `/v1/verbas` | `dbo.vw_verbas_api` | id_verba |
 | `/v1/verbas-ga360` | `dbo.vw_verbas_long_api` | id_verba_long |
 

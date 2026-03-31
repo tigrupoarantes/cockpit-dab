@@ -248,10 +248,10 @@
                                   },
                      "funcionarios":  {
                                           "source":  {
-                                                         "object":  "dbo.vw_funcionarios",
+                                                         "object":  "gold.vw_funcionario",
                                                          "type":  "view",
                                                          "key-fields":  [
-                                                                            "id_funcionario"
+                                                                            "CPF"
                                                                         ]
                                                      },
                                           "graphql":  {
@@ -262,7 +262,8 @@
                                                                    }
                                                       },
                                           "rest":  {
-                                                       "enabled":  true
+                                                       "enabled":  true,
+                                                       "path":  "funcionarios"
                                                    },
                                           "permissions":  [
                                                               {
@@ -339,10 +340,10 @@
 
                      "verbas_ga360":  {
                                          "source":  {
-                                                        "object":  "dbo.vw_verbas_long_api",
+                                                        "object":  "dbo.vw_verbas_api",
                                                         "type":  "view",
                                                         "key-fields":  [
-                                                                           "id_verba_long"
+                                                                           "id_verba"
                                                                        ]
                                                     },
                                          "graphql":  {
